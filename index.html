@@ -236,31 +236,27 @@ function isToday(ts){
 }
 
 // ── AUTH ───────────────────────────────────────────────────────
-auth.onAuthStateChanged(async user=>{
+auth.onAuthStateChanged(function(user){
   if(user){
     console.log("✅ Logged in UID:", user.uid);
-
-    const snap = await db.collection('users').doc(user.uid).get();
-
-    console.log("🔥 Firestore response:", snap);
-    console.log("🔥 Exists?", snap.exists);
-    console.log("🔥 Data:", snap.data());
-
-    if(!snap.exists){
-      alert("❌ User profile NOT found");
-      auth.signOut();
-      return;
-    }
-
-    alert("✅ User FOUND");
-
-    // continue normal flow
-    S.uid=user.uid;
-    S.user=snap.data();
-    S.role=S.user.role||'salesman';
-
-    document.getElementById('login').style.display='none';
-    document.getElementById('app').style.display='flex';
+    db.collection('users').doc(user.uid).get().then(function(snap){
+      console.log("🔥 Exists?", snap.exists);
+      console.log("🔥 Data:", snap.data());
+      if(!snap.exists){
+        alert("❌ User profile NOT found");
+        auth.signOut();
+        return;
+      }
+      alert("✅ User FOUND");
+      // normal flow
+      S.uid = user.uid;
+      S.user = snap.data();
+      S.role = S.user.role || 'salesman';
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    }).catch(function(err){
+      console.error("Firestore error:", err);
+    });
   }
 });
     S.user=snap.data(); S.role=S.user.role||'salesman';
