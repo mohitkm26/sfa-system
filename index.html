@@ -266,7 +266,8 @@ tr:hover td{background:#fafafa}
    FIREBASE INIT
    Collections used:
      users, customers, orders, invoices, payments,
-     visits, items, beat_plans, returns
+     visits, items, beat_plans, returns, clusters,
+     sub_cities, cities_master, skipped, settings
 ══════════════════════════════════════════════════════════════ */
 const app     = firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
@@ -281,7 +282,7 @@ const S = {
   // data caches
   customers:[], orders:[], invoices:[], payments:[],
   visits:[], items:[], beatPlan:{}, beatPlans:[], returns:[], allUsers:[],
-  clusters:[], skipped:[],
+  clusters:[], subCities:[], citiesMaster:[], skipped:[], settings:{maxVisitsPerDay:25},
   // ui state
   cart:{}, curCust:null, visitSelfie:false, visitGPS:false,
   navStack:[], orderFilter:'ALL', payFilter:'ALL',
@@ -309,7 +310,9 @@ const NAV = {
     {id:'apay',   icon:'💰', label:'Payments',  title:'Payments'},
     {id:'avisits',icon:'📍', label:'Visits',    title:'Visit Log'},
     {id:'aitems', icon:'📋', label:'Items',     title:'Item Master'},
+    {id:'asubcities', icon:'🏙️', label:'Sub Cities', title:'Sub-City Master'},
     {id:'aclusters', icon:'🧩', label:'Clusters', title:'Cluster Master'},
+    {id:'asettings', icon:'⚙️', label:'Settings', title:'Beat Settings'},
     {id:'abeat',  icon:'🗓', label:'Beat Plan', title:'Beat Planning'},
     {id:'arets',  icon:'↩️', label:'Returns',   title:'Returns'},
   ],
@@ -363,6 +366,7 @@ function mkDiv(cls,html){
   d.className=cls||''; if(html) d.innerHTML=html; return d;
 }
 function uid6(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
+function isAdmin(){ return S.role==='admin'; }
 
 // NEW: structured address formatter for customer cards/tables
 function fmtAddress(c){
@@ -444,7 +448,7 @@ function doLogout(){
     // clear state
     Object.assign(S,{customers:[],orders:[],invoices:[],payments:[],
       visits:[],items:[],beatPlan:{},beatPlans:[],returns:[],allUsers:[],
-      clusters:[],skipped:[],
+      clusters:[],subCities:[],citiesMaster:[],skipped:[],settings:{maxVisitsPerDay:25},
       cart:{},curCust:null,visitSelfie:false,visitGPS:false,navStack:[]});
   });
 }
@@ -457,7 +461,7 @@ async function loadAllData(){
     loadCustomers(), loadOrders(), loadInvoices(),
     loadPayments(), loadVisits(), loadItems(),
     loadBeatPlan(), loadReturns(), loadUsers(),
-    loadClusters(), loadSkipped(),
+    loadClusters(), loadSubCities(), loadCitiesMaster(), loadSkipped(), loadSettings(),
   ]);
 }
 
@@ -570,6 +574,53 @@ async function loadClusters(){
   } catch(e){ console.error('loadClusters',e); }
 }
 
+// NEW: SUB-CITY MASTER loader
+async function loadSubCities(){
+  try{
+    const snap=await db.collection('sub_cities').orderBy('city').orderBy('name').get();
+    S.subCities=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadSubCities',e); }
+}
+
+// NEW: settings loader (beat capacity etc.)
+async function loadSettings(){
+  try{
+    const snap=await db.collection('settings').doc('beat').get();
+    const data=snap.exists?snap.data():{};
+    S.settings={maxVisitsPerDay:Number(data.maxVisitsPerDay)||25};
+  } catch(e){ console.error('loadSettings',e); }
+}
+
+// NEW: one-time city master seed and loader (static India city/state dataset)
+async function loadCitiesMaster(){
+  try{
+    const cRef=db.collection('cities_master');
+    const hasAny=await cRef.limit(1).get();
+    if(hasAny.empty && S.role==='admin'){
+      const indiaCities=[
+        {name:'Mumbai',state:'Maharashtra'},{name:'Pune',state:'Maharashtra'},{name:'Nagpur',state:'Maharashtra'},
+        {name:'Delhi',state:'Delhi'},{name:'New Delhi',state:'Delhi'},{name:'Bengaluru',state:'Karnataka'},
+        {name:'Mysuru',state:'Karnataka'},{name:'Chennai',state:'Tamil Nadu'},{name:'Coimbatore',state:'Tamil Nadu'},
+        {name:'Hyderabad',state:'Telangana'},{name:'Warangal',state:'Telangana'},{name:'Ahmedabad',state:'Gujarat'},
+        {name:'Surat',state:'Gujarat'},{name:'Vadodara',state:'Gujarat'},{name:'Jaipur',state:'Rajasthan'},
+        {name:'Udaipur',state:'Rajasthan'},{name:'Lucknow',state:'Uttar Pradesh'},{name:'Kanpur',state:'Uttar Pradesh'},
+        {name:'Kolkata',state:'West Bengal'},{name:'Howrah',state:'West Bengal'},{name:'Patna',state:'Bihar'},
+        {name:'Bhopal',state:'Madhya Pradesh'},{name:'Indore',state:'Madhya Pradesh'},{name:'Kochi',state:'Kerala'},
+        {name:'Thiruvananthapuram',state:'Kerala'},{name:'Bhubaneswar',state:'Odisha'},{name:'Guwahati',state:'Assam'},
+        {name:'Chandigarh',state:'Chandigarh'},{name:'Ranchi',state:'Jharkhand'},{name:'Visakhapatnam',state:'Andhra Pradesh'}
+      ];
+      const batch=db.batch();
+      indiaCities.forEach(c=>{
+        const ref=cRef.doc(c.name.toLowerCase().replace(/\s+/g,'_'));
+        batch.set(ref,{...c,createdAt:ts()},{merge:true});
+      });
+      await batch.commit();
+    }
+    const snap=await cRef.orderBy('name').get();
+    S.citiesMaster=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadCitiesMaster',e); }
+}
+
 // NEW: skipped shops loader for next-day prioritization
 async function loadSkipped(){
   try{
@@ -629,8 +680,8 @@ function render(pid){
     inv:pgInv, pay:pgPay,
     // admin
     adash:pgAdash, aords:pgAords, ainv:pgAinv, acusts:pgAcusts,
-    apay:pgApay, avisits:pgAvisits, aitems:pgAitems, aclusters:pgAclusters,
-    abeat:pgAbeat, arets:pgArets,
+    apay:pgApay, avisits:pgAvisits, aitems:pgAitems, asubcities:pgAsubCities,
+    aclusters:pgAclusters, asettings:pgAsettings, abeat:pgAbeat, arets:pgArets,
     // warehouse
     wq:pgWq, winv:pgWinv, wd:pgWd, wret:pgWret,
   };
@@ -1405,10 +1456,87 @@ function rAC(custs,salesmen){
       <td><span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span></td>
       <td>
         <button class="btn bgy bsm" onclick="assignCust('${c.id}')">Assign</button>
+        <button class="btn bgy bsm" onclick="editCustSh('${c.id}')">Edit</button>
         <button class="btn bgy bsm" onclick="toggleActive('${c.id}',${c.isActive!==false})">${c.isActive!==false?'Deactivate':'Activate'}</button>
       </td>
     </tr>`;
   }).join('');
+}
+// NEW: admin customer edit modal for address + GST + cluster re-mapping
+function editCustSh(cid){
+  const c=S.customers.find(x=>x.id===cid); if(!c) return;
+  const cityOptions=S.citiesMaster.map(city=>`<option value="${city.name}" ${city.name===c.city?'selected':''}>${city.name}</option>`).join('');
+  osh(`<div class="sh-t">Edit Customer <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Shop No / Plot No</span><input class="inp" id="ec-shopno" value="${c.shopNo||''}" style="margin-bottom:0">
+    <span class="lbl">Apartment</span><input class="inp" id="ec-apt" value="${c.apartment||''}" style="margin-bottom:0">
+    <span class="lbl">Street *</span><input class="inp" id="ec-street" value="${c.street||''}" style="margin-bottom:0">
+    <div class="frow">
+      <div class="fcol"><span class="lbl">City *</span><select class="inp fs" id="ec-city" onchange="onEditCustomerCityChange()"><option value="">Select city...</option>${cityOptions}</select></div>
+      <div class="fcol"><span class="lbl">Sub City *</span><select class="inp fs" id="ec-subcity" onchange="onEditCustomerSubCityChange()"><option value="">Select sub-city...</option></select></div>
+    </div>
+    <div class="frow frow3">
+      <div class="fcol"><span class="lbl">Cluster *</span><select class="inp fs" id="ec-cluster"><option value="">Select cluster...</option></select></div>
+      <div class="fcol"><span class="lbl">State *</span><input class="inp" id="ec-state" value="${c.state||''}" style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">ZIP *</span><input class="inp" id="ec-zip" value="${c.zip||''}" style="margin-bottom:0"></div>
+    </div>
+    <span class="lbl">GSTIN</span><input class="inp" id="ec-gstin" value="${c.gstin||''}" style="margin-bottom:0">
+    <button class="btn bp bw" style="margin-top:12px" onclick="saveEditCust('${cid}')">Update Customer</button>`);
+  onEditCustomerCityChange(c.subCity,c.clusterId);
+}
+function onEditCustomerCityChange(selSubCity='',selClusterId=''){
+  const city=document.getElementById('ec-city')?.value||'';
+  const subEl=document.getElementById('ec-subcity');
+  if(!subEl) return;
+  const subs=S.subCities.filter(s=>s.city===city);
+  subEl.innerHTML=`<option value="">Select sub-city...</option>${subs.map(s=>`<option value="${s.name}" ${s.name===selSubCity?'selected':''}>${s.name}</option>`).join('')}`;
+  const cityMaster=S.citiesMaster.find(c=>c.name===city);
+  if(document.getElementById('ec-state')&&cityMaster?.state) document.getElementById('ec-state').value=cityMaster.state;
+  onEditCustomerSubCityChange(selClusterId);
+}
+function onEditCustomerSubCityChange(selClusterId=''){
+  const city=document.getElementById('ec-city')?.value||'';
+  const subCity=document.getElementById('ec-subcity')?.value||'';
+  const clEl=document.getElementById('ec-cluster');
+  if(!clEl) return;
+  const cls=S.clusters.filter(c=>c.city===city&&c.subCity===subCity);
+  clEl.innerHTML=`<option value="">Select cluster...</option>${cls.map(c=>`<option value="${c.id}" ${c.id===selClusterId?'selected':''}>${c.name}</option>`).join('')}`;
+}
+async function saveEditCust(cid){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
+  const customer=S.customers.find(x=>x.id===cid); if(!customer) return;
+  const prevClusterId=customer.clusterId||'';
+  const shopNo=document.getElementById('ec-shopno').value.trim();
+  const apartment=document.getElementById('ec-apt').value.trim();
+  const street=document.getElementById('ec-street').value.trim();
+  const city=document.getElementById('ec-city').value.trim();
+  const subCity=document.getElementById('ec-subcity').value.trim();
+  const clusterId=document.getElementById('ec-cluster').value;
+  const state=document.getElementById('ec-state').value.trim();
+  const zip=document.getElementById('ec-zip').value.trim();
+  const gstin=document.getElementById('ec-gstin').value.trim();
+  const clusterObj=S.clusters.find(c=>c.id===clusterId);
+  if(!street||!city||!subCity||!clusterObj?.name||!state||!zip){ toast('Fill all mandatory fields','e'); return; }
+  const payload={shopNo,apartment,street,city,subCity,state,zip,gstin,cluster:clusterObj.name,clusterId,updatedAt:ts()};
+  await db.collection('customers').doc(cid).update(payload);
+  Object.assign(customer,payload);
+  // NEW: update only future beat plans when cluster changes
+  if(prevClusterId!==clusterId){
+    await updateFutureBeatPlanCustomerMeta(cid,clusterObj.name);
+  }
+  csh(); toast('Customer updated','s'); render('acusts');
+}
+
+// NEW: sync future beat docs after admin cluster change
+async function updateFutureBeatPlanCustomerMeta(customerId,newCluster){
+  const today=nowStr();
+  const snap=await db.collection('beat_plans').where('date','>=',today).where('customers','array-contains',customerId).get();
+  const updates=snap.docs.map(async d=>{
+    const data=d.data();
+    const clusters=[...(data.clusters||[])];
+    if(!clusters.includes(newCluster)) clusters.push(newCluster);
+    await d.ref.update({clusters,updatedAt:ts()});
+  });
+  await Promise.all(updates);
 }
 function aSrch(q){
   const f=S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q));
@@ -1424,29 +1552,36 @@ function aCF(f,el){
 }
 function addCshAdmin(){
   const salesmen=S.allUsers.filter(u=>u.role==='salesman');
-  const states=['Maharashtra','Karnataka','Delhi','Gujarat','Tamil Nadu','Telangana'];
-  const clusterOptions=S.clusters.map(c=>`<option value="${c.id}">${c.name} · ${c.subCity}, ${c.city}</option>`).join('');
+  const cityOptions=S.citiesMaster.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
   osh(`<div class="sh-t">Add Customer <button class="sh-x" onclick="csh()">✕</button></div>
     <span class="lbl">Shop Name *</span>
     <input class="inp" id="nc-n" placeholder="e.g. Sharma Kirana" style="margin-bottom:0">
     <span class="lbl">Phone *</span>
     <input class="inp" id="nc-p" type="tel" placeholder="10-digit" style="margin-bottom:0">
-    <div class="frow">
+    <div class="frow frow3">
       <div class="fcol"><span class="lbl">Shop No / Plot No</span><input class="inp" id="nc-shopno" placeholder="A-12" style="margin-bottom:0"></div>
       <div class="fcol"><span class="lbl">Apartment</span><input class="inp" id="nc-apt" placeholder="Sunrise Apt" style="margin-bottom:0"></div>
     </div>
     <span class="lbl">Street *</span>
     <input class="inp" id="nc-street" placeholder="Main Market Road" style="margin-bottom:0">
-    <span class="lbl">Cluster *</span>
-    <select class="inp fs" id="nc-cluster" onchange="onClusterChange(this.value)">
-      <option value="">Select cluster...</option>${clusterOptions}
-    </select>
     <div class="frow">
-      <div class="fcol"><span class="lbl">Sub City *</span><input class="inp" id="nc-subcity" readonly style="margin-bottom:0"></div>
-      <div class="fcol"><span class="lbl">City *</span><input class="inp" id="nc-city" readonly style="margin-bottom:0"></div>
+      <div class="fcol">
+        <span class="lbl">City *</span>
+        <select class="inp fs" id="nc-city" onchange="onCustomerCityChange()">
+          <option value="">Select city...</option>${cityOptions}
+        </select>
+      </div>
+      <div class="fcol">
+        <span class="lbl">Sub City *</span>
+        <select class="inp fs" id="nc-subcity" onchange="onCustomerSubCityChange()"><option value="">Select sub-city...</option></select>
+      </div>
     </div>
     <div class="frow">
-      <div class="fcol"><span class="lbl">State *</span><select class="inp fs" id="nc-state"><option value="">Select state...</option>${states.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="fcol">
+        <span class="lbl">Cluster *</span>
+        <select class="inp fs" id="nc-cluster"><option value="">Select cluster...</option></select>
+      </div>
+      <div class="fcol"><span class="lbl">State *</span><input class="inp" id="nc-state" placeholder="Auto from city" style="margin-bottom:0"></div>
       <div class="fcol"><span class="lbl">ZIP *</span><input class="inp" id="nc-zip" placeholder="400001" style="margin-bottom:0"></div>
     </div>
     <span class="lbl">GSTN (optional)</span>
@@ -1457,16 +1592,19 @@ function addCshAdmin(){
       ${salesmen.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}
     </select>
     <button class="btn bp bw" style="margin-top:12px" onclick="saveAdminCust()">Save Customer</button>`);
+  // NEW: initialize dependent dropdowns in customer form
+  onCustomerCityChange();
 }
 async function saveAdminCust(){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
   const n=document.getElementById('nc-n').value.trim();
   const p=document.getElementById('nc-p').value.trim();
   const shopNo=document.getElementById('nc-shopno').value.trim();
   const apartment=document.getElementById('nc-apt').value.trim();
   const street=document.getElementById('nc-street').value.trim();
-  const clusterId=document.getElementById('nc-cluster').value;
-  const subCity=document.getElementById('nc-subcity').value.trim();
   const city=document.getElementById('nc-city').value.trim();
+  const subCity=document.getElementById('nc-subcity').value.trim();
+  const clusterId=document.getElementById('nc-cluster').value;
   const state=document.getElementById('nc-state').value.trim();
   const zip=document.getElementById('nc-zip').value.trim();
   const g=document.getElementById('nc-g').value.trim();
@@ -1487,13 +1625,29 @@ async function saveAdminCust(){
     csh(); toast('Customer added!','s'); go('acusts');
   } catch(e){ toast(e.message,'e'); }
 }
-// NEW: auto-fill sub-city and city from cluster selection
-function onClusterChange(clusterId){
-  const c=S.clusters.find(x=>x.id===clusterId);
-  const sc=document.getElementById('nc-subcity');
-  const city=document.getElementById('nc-city');
-  if(sc) sc.value=c?.subCity||'';
-  if(city) city.value=c?.city||'';
+// NEW: filter sub-city dropdown by selected city and auto-fill state
+function onCustomerCityChange(){
+  const cityEl=document.getElementById('nc-city');
+  const subEl=document.getElementById('nc-subcity');
+  const clEl=document.getElementById('nc-cluster');
+  if(!cityEl||!subEl||!clEl) return;
+  const city=cityEl.value;
+  const subs=S.subCities.filter(s=>s.city===city);
+  subEl.innerHTML=`<option value="">Select sub-city...</option>${subs.map(s=>`<option value="${s.name}">${s.name}</option>`).join('')}`;
+  clEl.innerHTML='<option value="">Select cluster...</option>';
+  const cityMaster=S.citiesMaster.find(c=>c.name===city);
+  const stateEl=document.getElementById('nc-state');
+  if(stateEl && cityMaster?.state) stateEl.value=cityMaster.state;
+}
+
+// NEW: filter cluster dropdown by selected sub-city
+function onCustomerSubCityChange(){
+  const city=document.getElementById('nc-city')?.value||'';
+  const subCity=document.getElementById('nc-subcity')?.value||'';
+  const clEl=document.getElementById('nc-cluster');
+  if(!clEl) return;
+  const cls=S.clusters.filter(c=>c.city===city&&c.subCity===subCity);
+  clEl.innerHTML=`<option value="">Select cluster...</option>${cls.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}`;
 }
 function assignCust(cid){
   const salesmen=S.allUsers.filter(u=>u.role==='salesman');
@@ -1723,33 +1877,51 @@ function pgAbeat(){
       </div>
     </div>
     ${selSm?next7.map(date=>{
-      const beat=S.beatPlans.find(b=>b.salesmanId===selSm&&b.date===date)||{clusters:[],customers:[]};
+      const beat=S.beatPlans.find(b=>b.salesmanId===selSm&&b.date===date)||{clusters:[],customers:[],manualOverrides:[]};
       const beatCusts=beat.customers.map(cid=>smCusts.find(c=>c.id===cid)).filter(Boolean);
       return `<div class="bd2">
-        <div class="bdt">${date}<span style="font-size:11px;color:var(--mu)">${beat.clusters.length} clusters · ${beatCusts.length} shops</span></div>
+        <div class="bdt">${date}<span style="font-size:11px;color:var(--mu)">${beat.clusters.length} clusters · ${beatCusts.length}/${S.settings.maxVisitsPerDay} shops</span></div>
         <div class="lis2" style="margin-bottom:6px">Clusters: ${beat.clusters.length?beat.clusters.join(', '):'—'}</div>
-        ${beatCusts.map(c=>`<div class="bc"><span>🏪</span><span style="flex:1">${c.name}</span><span style="font-size:11px;color:var(--mu)">${c.cluster||''}</span></div>`).join('')||'<div style="font-size:11px;color:#94a3b8;padding:4px 6px">No shops planned</div>'}
+        ${beatCusts.map(c=>`<div class="bc"><span>🏪</span><span style="flex:1">${c.name}</span><span style="font-size:11px;color:var(--mu)">${c.cluster||''}</span>${(beat.manualOverrides||[]).includes(c.id)?'<span class="bge bgpu">manual</span>':''}</div>`).join('')||'<div style="font-size:11px;color:#94a3b8;padding:4px 6px">No shops planned</div>'}
+        <div class="rbs"><button class="btn bgy bsm" onclick="addCustomerToDateSh('${selSm}','${date}')">+ Add Customer to Date</button></div>
       </div>`;
     }).join(''):`<div class="es"><div class="ei">👆</div><div class="et">Select a salesman to manage beat plans</div></div>`}`;
   return d;
 }
-// REPLACED: weekly beat logic with date-wise cluster beat planning
+// REPLACED: capacity-aware beat logic with skipped priority + manual override preservation
 async function genBeat(smId){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
   if(!smId){ toast('Select a salesman first','e'); return; }
+  const maxVisits=Math.max(1,Number(S.settings.maxVisitsPerDay)||25);
   const custs=S.customers.filter(c=>c.assignedSalesmanId===smId&&c.isActive!==false);
+  const custMap=Object.fromEntries(custs.map(c=>[c.id,c]));
   const clusterMap={};
   custs.forEach(c=>{ if(!clusterMap[c.cluster]) clusterMap[c.cluster]=[]; clusterMap[c.cluster].push(c.id); });
-  const clusters=Object.keys(clusterMap).filter(Boolean);
+  const clusters=Object.keys(clusterMap).filter(Boolean).sort();
   if(!clusters.length){ toast('No cluster-mapped customers for selected salesman','w'); return; }
   const today=new Date();
   const batch=db.batch();
+  const skippedFirst=S.skipped
+    .filter(s=>s.salesmanId===smId)
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''))
+    .map(s=>s.customerId)
+    .filter((id,idx,arr)=>arr.indexOf(id)===idx&&custMap[id]);
+  const plannedQueue=[...skippedFirst];
+  clusters.forEach(cl=>(clusterMap[cl]||[]).forEach(id=>{ if(!plannedQueue.includes(id)) plannedQueue.push(id); }));
+  let ptr=0;
   for(let i=0;i<7;i++){
     const dt=new Date(today); dt.setDate(dt.getDate()+i);
     const date=dt.toISOString().split('T')[0];
-    const chosenCluster=clusters[i%clusters.length]; // each cluster once per week
-    const customers=clusterMap[chosenCluster]||[];
+    const existing=S.beatPlans.find(b=>b.salesmanId===smId&&b.date===date)||{};
+    const manualOverrides=(existing.manualOverrides||[]).filter(cid=>custMap[cid]);
+    const dayCustomers=[...manualOverrides];
+    while(dayCustomers.length<maxVisits && ptr<plannedQueue.length){
+      const nextId=plannedQueue[ptr++];
+      if(!dayCustomers.includes(nextId)) dayCustomers.push(nextId);
+    }
+    const dayClusters=[...new Set(dayCustomers.map(cid=>custMap[cid]?.cluster).filter(Boolean))];
     const ref=db.collection('beat_plans').doc(`${smId}_${date}`);
-    batch.set(ref,{date,salesmanId:smId,clusters:[chosenCluster],customers,updatedAt:ts()},{merge:true});
+    batch.set(ref,{date,salesmanId:smId,clusters:dayClusters,customers:dayCustomers,manualOverrides,updatedAt:ts()},{merge:true});
   }
   await batch.commit();
   await loadBeatPlan();
@@ -1757,27 +1929,110 @@ async function genBeat(smId){
   render('abeat');
 }
 
+// NEW: manual override modal and save
+function addCustomerToDateSh(smId,date){
+  const assigned=S.customers.filter(c=>c.assignedSalesmanId===smId&&c.isActive!==false);
+  osh(`<div class="sh-t">Manual Beat Override <button class="sh-x" onclick="csh()">✕</button></div>
+    <div class="lis2" style="margin-bottom:8px">Salesman/date: ${date}</div>
+    <select class="inp fs" id="mo-customer">
+      <option value="">Select customer...</option>
+      ${assigned.map(c=>`<option value="${c.id}">${c.name} · ${c.cluster||'-'}</option>`).join('')}
+    </select>
+    <button class="btn bp bw" style="margin-top:10px" onclick="saveManualOverride('${smId}','${date}')">Add Customer to Date</button>`);
+}
+async function saveManualOverride(smId,date){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
+  const cid=document.getElementById('mo-customer').value;
+  if(!cid){ toast('Select customer','e'); return; }
+  const customer=S.customers.find(c=>c.id===cid); if(!customer){ toast('Invalid customer','e'); return; }
+  const ref=db.collection('beat_plans').doc(`${smId}_${date}`);
+  await db.runTransaction(async tx=>{
+    const snap=await tx.get(ref);
+    const d=snap.exists?snap.data():{customers:[],clusters:[],manualOverrides:[]};
+    const customers=[...new Set([...(d.customers||[]),cid])];
+    const clusters=[...new Set([...(d.clusters||[]),customer.cluster].filter(Boolean))];
+    const manualOverrides=[...new Set([...(d.manualOverrides||[]),cid])];
+    tx.set(ref,{date,salesmanId:smId,customers,clusters,manualOverrides,updatedAt:ts()},{merge:true});
+  });
+  await loadBeatPlan();
+  csh(); toast('Manual override added','s'); render('abeat');
+}
+
+// NEW: admin sub-city master page
+function pgAsubCities(){
+  const cityOptions=S.citiesMaster.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div class="card">
+      <div class="frow">
+        <div class="fcol"><span class="lbl">Sub-City Name *</span><input id="sc-name" class="inp" placeholder="Andheri East" style="margin-bottom:0"></div>
+        <div class="fcol"><span class="lbl">City *</span><select id="sc-city" class="inp fs"><option value="">Select city...</option>${cityOptions}</select></div>
+      </div>
+      <button class="btn bp" style="margin-top:10px" onclick="saveSubCity()">+ Add Sub-City</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Sub-City</th><th>City</th><th></th></tr></thead>
+      <tbody>${S.subCities.map(s=>`<tr><td>${s.name}</td><td>${s.city}</td><td><button class="btn bgy bsm" onclick="editSubCitySh('${s.id}')">Edit</button></td></tr>`).join('')}</tbody>
+    </table></div>`;
+  return d;
+}
+async function saveSubCity(){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
+  const name=document.getElementById('sc-name').value.trim();
+  const city=document.getElementById('sc-city').value.trim();
+  if(!name||!city){ toast('Sub-city and city are required','e'); return; }
+  const ref=await db.collection('sub_cities').add({name,city,createdAt:ts(),createdBy:S.uid});
+  S.subCities.push({id:ref.id,name,city});
+  toast('Sub-city added','s'); render('asubcities');
+}
+function editSubCitySh(id){
+  const s=S.subCities.find(x=>x.id===id); if(!s) return;
+  const cityOptions=S.citiesMaster.map(c=>`<option value="${c.name}" ${c.name===s.city?'selected':''}>${c.name}</option>`).join('');
+  osh(`<div class="sh-t">Edit Sub-City <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Sub-City Name *</span><input class="inp" id="esc-name" value="${s.name}" style="margin-bottom:0">
+    <span class="lbl">City *</span><select class="inp fs" id="esc-city"><option value="">Select city...</option>${cityOptions}</select>
+    <button class="btn bp bw" onclick="updateSubCity('${id}')">Update</button>`);
+}
+async function updateSubCity(id){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
+  const name=document.getElementById('esc-name').value.trim();
+  const city=document.getElementById('esc-city').value.trim();
+  if(!name||!city){ toast('Sub-city and city are required','e'); return; }
+  await db.collection('sub_cities').doc(id).update({name,city,updatedAt:ts()});
+  const s=S.subCities.find(x=>x.id===id); if(s){s.name=name;s.city=city;}
+  csh(); toast('Sub-city updated','s'); render('asubcities');
+}
+
 // NEW: admin cluster master page
 function pgAclusters(){
+  const cityOptions=S.citiesMaster.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
   const d=mkDiv('pg');
   d.innerHTML=`
     <div class="card">
       <div class="frow">
         <div class="fcol"><span class="lbl">Cluster Name *</span><input id="cl-name" class="inp" placeholder="Cluster A" style="margin-bottom:0"></div>
-        <div class="fcol"><span class="lbl">Sub City *</span><input id="cl-subcity" class="inp" placeholder="Andheri East" style="margin-bottom:0"></div>
+        <div class="fcol"><span class="lbl">City *</span><select id="cl-city" class="inp fs" onchange="onClusterCityAdminChange()"><option value="">Select city...</option>${cityOptions}</select></div>
       </div>
       <div class="frow">
-        <div class="fcol"><span class="lbl">City *</span><input id="cl-city" class="inp" placeholder="Mumbai" style="margin-bottom:0"></div>
+        <div class="fcol"><span class="lbl">Sub City *</span><select id="cl-subcity" class="inp fs"><option value="">Select sub-city...</option></select></div>
         <div class="fcol" style="justify-content:flex-end"><button class="btn bp" style="margin-top:26px" onclick="saveCluster()">+ Add Cluster</button></div>
       </div>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>Cluster</th><th>Sub City</th><th>City</th></tr></thead>
-      <tbody>${S.clusters.map(c=>`<tr><td>${c.name}</td><td>${c.subCity}</td><td>${c.city}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Cluster</th><th>Sub City</th><th>City</th><th></th></tr></thead>
+      <tbody>${S.clusters.map(c=>`<tr><td>${c.name}</td><td>${c.subCity}</td><td>${c.city}</td><td><button class="btn bgy bsm" onclick="editClusterSh('${c.id}')">Edit</button></td></tr>`).join('')}</tbody>
     </table></div>`;
   return d;
 }
+function onClusterCityAdminChange(selSub=''){
+  const city=document.getElementById('cl-city')?.value||'';
+  const subEl=document.getElementById('cl-subcity');
+  if(!subEl) return;
+  const subs=S.subCities.filter(s=>s.city===city);
+  subEl.innerHTML=`<option value="">Select sub-city...</option>${subs.map(s=>`<option value="${s.name}" ${s.name===selSub?'selected':''}>${s.name}</option>`).join('')}`;
+}
 async function saveCluster(){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
   const name=document.getElementById('cl-name').value.trim();
   const subCity=document.getElementById('cl-subcity').value.trim();
   const city=document.getElementById('cl-city').value.trim();
@@ -1786,6 +2041,53 @@ async function saveCluster(){
   S.clusters.push({id:ref.id,name,subCity,city});
   toast('Cluster added','s');
   render('aclusters');
+}
+function editClusterSh(id){
+  const c=S.clusters.find(x=>x.id===id); if(!c) return;
+  const cityOptions=S.citiesMaster.map(city=>`<option value="${city.name}" ${city.name===c.city?'selected':''}>${city.name}</option>`).join('');
+  osh(`<div class="sh-t">Edit Cluster <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Cluster Name *</span><input class="inp" id="ecl-name" value="${c.name}" style="margin-bottom:0">
+    <span class="lbl">City *</span><select class="inp fs" id="ecl-city" onchange="onEditClusterCityChange()"><option value="">Select city...</option>${cityOptions}</select>
+    <span class="lbl">Sub City *</span><select class="inp fs" id="ecl-subcity"><option value="">Select sub-city...</option></select>
+    <button class="btn bp bw" style="margin-top:10px" onclick="updateCluster('${id}')">Update Cluster</button>`);
+  onEditClusterCityChange(c.subCity);
+}
+function onEditClusterCityChange(selSub=''){
+  const city=document.getElementById('ecl-city')?.value||'';
+  const subEl=document.getElementById('ecl-subcity');
+  if(!subEl) return;
+  const subs=S.subCities.filter(s=>s.city===city);
+  subEl.innerHTML=`<option value="">Select sub-city...</option>${subs.map(s=>`<option value="${s.name}" ${s.name===selSub?'selected':''}>${s.name}</option>`).join('')}`;
+}
+async function updateCluster(id){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
+  const name=document.getElementById('ecl-name').value.trim();
+  const city=document.getElementById('ecl-city').value.trim();
+  const subCity=document.getElementById('ecl-subcity').value.trim();
+  if(!name||!city||!subCity){ toast('All cluster fields are required','e'); return; }
+  await db.collection('clusters').doc(id).update({name,city,subCity,updatedAt:ts()});
+  const c=S.clusters.find(x=>x.id===id); if(c){c.name=name;c.city=city;c.subCity=subCity;}
+  csh(); toast('Cluster updated','s'); render('aclusters');
+}
+
+// NEW: beat settings (max visits per day)
+function pgAsettings(){
+  const d=mkDiv('pg');
+  d.innerHTML=`<div class="card">
+    <div class="pt" style="margin:0 0 4px">Beat Capacity</div>
+    <div class="ps" style="margin:0 0 12px">Max customer visits auto-planned per day</div>
+    <span class="lbl">Max Visits Per Day</span>
+    <input class="inp" id="set-max-visits" type="number" min="1" value="${S.settings.maxVisitsPerDay||25}" style="margin-bottom:0">
+    <button class="btn bp bw" style="margin-top:12px" onclick="saveBeatSettings()">Save Settings</button>
+  </div>`;
+  return d;
+}
+async function saveBeatSettings(){
+  if(!isAdmin()){ toast('Admin access only','e'); return; }
+  const maxVisitsPerDay=Math.max(1,Number(document.getElementById('set-max-visits').value)||1);
+  await db.collection('settings').doc('beat').set({maxVisitsPerDay,updatedAt:ts(),updatedBy:S.uid},{merge:true});
+  S.settings.maxVisitsPerDay=maxVisitsPerDay;
+  toast('Settings saved','s');
 }
 
 /* ── ADMIN: RETURNS ────────────────────────────────── */
