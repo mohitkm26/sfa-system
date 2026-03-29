@@ -6,115 +6,209 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>SFA System</title>
 <style>
+/* ── RESET & VARIABLES ─────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--ind:#6366f1;--grn:#10b981;--amb:#f59e0b;--red:#ef4444;--pur:#8b5cf6;--sl:#1e293b;--mu:#64748b;--bd:#e2e8f0;--bg:#f1f5f9;--wh:#fff}
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);min-height:100vh}
+:root{
+  --ind:#6366f1;--ind2:#4f46e5;--grn:#10b981;--amb:#f59e0b;
+  --red:#ef4444;--pur:#8b5cf6;--blu:#3b82f6;--cyn:#06b6d4;
+  --sl:#1e293b;--mu:#64748b;--bd:#e2e8f0;--bg:#f1f5f9;--wh:#fff;
+}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);min-height:100vh;font-size:14px}
 button,input,select,textarea{font-family:inherit;cursor:pointer}
-.h{display:none!important}
-#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--sl);color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+a{color:var(--ind);text-decoration:none}
+
+/* ── TOAST ─────────────────────────────────────────── */
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:var(--sl);color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;
+  font-weight:600;z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:90vw;text-align:center}
 #toast.show{transform:translateX(-50%) translateY(0)}
 #toast.s{background:#059669}#toast.w{background:#d97706}#toast.e{background:#dc2626}
-#ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-end;justify-content:center}
+
+/* ── MODAL / SHEET ─────────────────────────────────── */
+#ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;
+  align-items:flex-end;justify-content:center;overflow:hidden}
 #ov.show{display:flex}
-.sh{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 36px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;animation:su .3s ease}
+.sh{background:#fff;border-radius:24px 24px 0 0;padding:22px 18px 36px;width:100%;
+  max-width:540px;max-height:90vh;overflow-y:auto;animation:su .3s ease}
 @keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sh-t{font-size:18px;font-weight:800;color:var(--sl);margin-bottom:16px}
-.sh-x{float:right;background:var(--bg);border:none;width:30px;height:30px;border-radius:50%;font-size:16px;line-height:30px;text-align:center;cursor:pointer}
-/* LOGIN */
-#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px}
-.lc{background:#fff;border-radius:24px;padding:36px 28px;width:100%;max-width:380px;box-shadow:0 25px 60px rgba(0,0,0,.25)}
-.ll{font-size:42px;text-align:center;margin-bottom:6px}
+.sh-t{font-size:17px;font-weight:800;color:var(--sl);margin-bottom:16px;line-height:1.3}
+.sh-x{float:right;background:var(--bg);border:none;width:30px;height:30px;
+  border-radius:50%;font-size:15px;line-height:30px;text-align:center;cursor:pointer;margin-left:8px}
+
+/* ── LOGIN ─────────────────────────────────────────── */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px}
+.lc{background:#fff;border-radius:24px;padding:36px 28px;width:100%;max-width:380px;
+  box-shadow:0 25px 60px rgba(0,0,0,.25)}
+.ll{font-size:40px;text-align:center;margin-bottom:6px}
 .lh{font-size:22px;font-weight:900;text-align:center;color:var(--sl)}
-.ls{font-size:13px;color:var(--mu);text-align:center;margin-bottom:24px;margin-top:4px}
-.rt{display:flex;background:var(--bg);border-radius:12px;padding:4px;gap:3px;margin-bottom:18px}
-.rb{flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:12px;font-weight:700;color:var(--mu);background:transparent;transition:.2s}
+.ls{font-size:13px;color:var(--mu);text-align:center;margin-bottom:22px;margin-top:4px}
+.rt{display:flex;background:var(--bg);border-radius:12px;padding:4px;gap:3px;margin-bottom:16px}
+.rb{flex:1;padding:8px 4px;border:none;border-radius:9px;font-size:11px;font-weight:700;
+  color:var(--mu);background:transparent;transition:.2s}
 .rb.on{background:#fff;color:var(--ind);box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.inp{width:100%;padding:13px 16px;border:1.5px solid var(--bd);border-radius:12px;font-size:15px;outline:none;transition:border .2s;background:#fff;margin-bottom:12px}
+
+/* ── INPUTS ─────────────────────────────────────────── */
+.inp{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius:11px;
+  font-size:14px;outline:none;transition:border .2s;background:#fff;margin-bottom:10px}
 .inp:focus{border-color:var(--ind)}
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.inp-sm{padding:9px 12px;font-size:13px;border-radius:9px}
+select.inp,select.fs{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.fs{width:100%;padding:12px 32px 12px 14px;border:1.5px solid var(--bd);border-radius:11px;font-size:14px;outline:none;background-color:#fff;margin-bottom:0}
+.fs:focus{border-color:var(--ind)}
+.lbl{font-size:12px;font-weight:700;color:var(--sl);margin-bottom:5px;margin-top:12px;display:block;text-transform:uppercase;letter-spacing:.4px}
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:10px 16px;border:none;border-radius:10px;font-size:13px;font-weight:700;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap;line-height:1}
 .btn:active{opacity:.8}
 .bp{background:var(--ind);color:#fff}.bg2{background:var(--grn);color:#fff}
 .br2{background:var(--red);color:#fff}.ba{background:var(--amb);color:#fff}
+.bpu{background:var(--pur);color:#fff}.bbl{background:var(--blu);color:#fff}
 .bgy{background:var(--bg);color:var(--sl);border:1.5px solid var(--bd)}
-.bsm{padding:7px 14px;font-size:12px;border-radius:8px}.bw{width:100%}
-.hint{text-align:center;font-size:12px;color:#94a3b8;margin-top:12px}
-/* APP SHELL */
-#app{display:none;flex-direction:column;height:100vh;max-width:520px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.1)}
-.tb{background:var(--ind);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.tbl{display:flex;align-items:center;gap:10px}
-.tbb{background:rgba(255,255,255,.2);border:none;color:#fff;width:34px;height:34px;border-radius:10px;font-size:18px;display:none;align-items:center;justify-content:center;cursor:pointer}
+.bsm{padding:6px 12px;font-size:12px;border-radius:8px}
+.bw{width:100%;padding:13px;font-size:15px}
+.btn-lg{padding:14px;font-size:16px;width:100%}
+.hint{text-align:center;font-size:12px;color:#94a3b8;margin-top:10px}
+
+/* ── APP SHELL ──────────────────────────────────────── */
+#app{display:none;flex-direction:column;height:100vh;max-width:600px;margin:0 auto;
+  background:#fff;box-shadow:0 0 40px rgba(0,0,0,.1)}
+.tb{background:var(--ind);padding:12px 16px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0}
+.tbl{display:flex;align-items:center;gap:9px}
+.tbb{background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;
+  border-radius:9px;font-size:17px;display:none;align-items:center;justify-content:center;cursor:pointer}
 .tbb.show{display:flex}
-.tbt{color:#fff;font-size:16px;font-weight:800}
-.tbr{display:flex;align-items:center;gap:8px}
-.av{background:rgba(255,255,255,.25);color:#fff;width:34px;height:34px;border-radius:50%;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
-.lo{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
+.tbt{color:#fff;font-size:15px;font-weight:800}
+.tbr{display:flex;align-items:center;gap:7px}
+.av{background:rgba(255,255,255,.25);color:#fff;width:32px;height:32px;border-radius:50%;
+  font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.lo{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;
+  border-radius:7px;font-size:11px;font-weight:700;cursor:pointer}
 .ct{flex:1;overflow-y:auto;background:var(--bg)}
-.bn{background:#fff;border-top:1px solid var(--bd);display:flex;flex-shrink:0}
-.bi{flex:1;padding:10px 4px 8px;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#94a3b8;cursor:pointer}
+.bn{background:#fff;border-top:1px solid var(--bd);display:flex;flex-shrink:0;overflow-x:auto}
+.bi{flex:1;min-width:48px;padding:9px 4px 7px;border:none;background:transparent;
+  display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;
+  font-weight:700;color:#94a3b8;cursor:pointer;transition:color .2s;white-space:nowrap}
 .bi.on{color:var(--ind)}
-.bic{font-size:20px;line-height:1}
-/* PAGE */
-.pg{padding:16px}
-.pt{font-size:20px;font-weight:900;color:var(--sl);margin-bottom:4px}
-.ps{font-size:13px;color:var(--mu);margin-bottom:18px}
-/* COMPONENTS */
-.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-.st{background:#fff;border-radius:14px;padding:15px;border-left:4px solid}
-.sv{font-size:25px;font-weight:900;line-height:1.1}
-.sl2{font-size:12px;color:var(--mu);margin-top:3px}
-.sc{font-size:13px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
-.bge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
-.bgr{background:var(--bg);color:var(--mu)}.bgg{background:#d1fae5;color:#065f46}
-.bam{background:#fef3c7;color:#92400e}.brd{background:#fee2e2;color:#991b1b}
-.bbl{background:#dbeafe;color:#1e40af}.bpu{background:#ede9fe;color:#5b21b6}
-.ab{border-radius:14px;padding:13px 15px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:13px}
+.bic{font-size:18px;line-height:1}
+
+/* ── PAGE ───────────────────────────────────────────── */
+.pg{padding:14px}
+.pt{font-size:19px;font-weight:900;color:var(--sl);margin-bottom:3px}
+.ps{font-size:12px;color:var(--mu);margin-bottom:16px}
+
+/* ── COMPONENTS ─────────────────────────────────────── */
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;
+  box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.sg3{grid-template-columns:1fr 1fr 1fr}
+.st{background:#fff;border-radius:13px;padding:13px;border-left:4px solid}
+.sv{font-size:22px;font-weight:900;line-height:1.1}
+.sl2{font-size:11px;color:var(--mu);margin-top:2px}
+.sc{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;
+  letter-spacing:.6px;margin:16px 0 9px;display:flex;align-items:center;
+  justify-content:space-between;gap:8px}
+/* BADGES */
+.bge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.bgr{background:var(--bg);color:var(--mu)}
+.bgg{background:#d1fae5;color:#065f46}
+.bgam{background:#fef3c7;color:#92400e}
+.bgrd{background:#fee2e2;color:#991b1b}
+.bgbl{background:#dbeafe;color:#1e40af}
+.bgpu{background:#ede9fe;color:#5b21b6}
+.bgcy{background:#cffafe;color:#164e63}
+.bgsl{background:#f1f5f9;color:#334155}
+/* ALERTS */
+.ab{border-radius:13px;padding:12px 14px;margin-bottom:11px;
+  display:flex;align-items:flex-start;gap:9px;font-size:13px}
 .aab{background:#fffbeb;border:1.5px solid #fcd34d}
 .agb{background:#f0fdf4;border:1.5px solid #86efac}
-.li{background:#fff;border-radius:14px;padding:14px;margin-bottom:9px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.arb{background:#fff1f2;border:1.5px solid #fca5a5}
+/* LIST ITEMS */
+.li{background:#fff;border-radius:13px;padding:13px;margin-bottom:8px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:9px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .lim{flex:1;min-width:0}
-.lit{font-size:15px;font-weight:700;color:var(--sl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lit{font-size:14px;font-weight:700;color:var(--sl);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
 .lis{font-size:12px;color:var(--mu);margin-top:2px}
 .lis2{font-size:11px;color:#94a3b8;margin-top:3px}
-.lbl{font-size:13px;font-weight:700;color:var(--sl);margin-bottom:6px;margin-top:14px;display:block}
-.rbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.dv{height:1px;background:var(--bd);margin:12px 0}
-.si{width:100%;padding:12px 16px 12px 40px;border:1.5px solid var(--bd);border-radius:12px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 13px center;margin-bottom:13px}
+.lir{flex-shrink:0;text-align:right}
+/* MISC */
+.rbs{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.dv{height:1px;background:var(--bd);margin:11px 0}
+.si{width:100%;padding:11px 16px 11px 38px;border:1.5px solid var(--bd);
+  border-radius:11px;font-size:13px;outline:none;margin-bottom:12px;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 11px center}
 .si:focus{border-color:var(--ind)}
-.pr{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
-.pl{padding:6px 13px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:.15s}
+.pr{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.pl{padding:5px 12px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;
+  font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:.15s}
 .pl.on{background:var(--ind);border-color:var(--ind);color:#fff}
-.pw{height:6px;background:var(--bg);border-radius:3px;margin:10px 0;overflow:hidden}
+.pw{height:5px;background:var(--bg);border-radius:3px;margin:9px 0;overflow:hidden}
 .pf{height:100%;border-radius:3px;background:var(--ind);transition:width .6s ease}
-.fs{width:100%;padding:13px 16px;border:1.5px solid var(--bd);border-radius:12px;font-size:14px;outline:none;background:#fff;margin-bottom:0}
-.fs:focus{border-color:var(--ind)}
-.mr{display:flex;gap:8px;flex-wrap:wrap}
-.mb{padding:9px 15px;border-radius:10px;border:1.5px solid var(--bd);background:#fff;font-size:13px;font-weight:700;color:var(--mu);cursor:pointer;transition:.2s}
+.mr{display:flex;gap:7px;flex-wrap:wrap}
+.mb{padding:8px 14px;border-radius:9px;border:1.5px solid var(--bd);background:#fff;
+  font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:.2s}
 .mb.on{background:var(--ind);border-color:var(--ind);color:#fff}
-.es{text-align:center;padding:50px 20px;color:var(--mu)}
-.ei{font-size:48px;margin-bottom:12px}
-.et{font-size:15px;font-weight:600;color:var(--sl)}
-.qc{display:flex;align-items:center;gap:10px}
-.qb{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--bd);background:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sl);flex-shrink:0}
+.es{text-align:center;padding:44px 20px;color:var(--mu)}
+.ei{font-size:44px;margin-bottom:10px}
+.et{font-size:14px;font-weight:600;color:var(--sl)}
+.qc{display:flex;align-items:center;gap:9px}
+.qb{width:32px;height:32px;border-radius:9px;border:1.5px solid var(--bd);
+  background:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;color:var(--sl);flex-shrink:0}
 .qbp{background:var(--ind);border-color:var(--ind);color:#fff}
-.qv{width:32px;text-align:center;font-size:16px;font-weight:800}
-.sc2{width:140px;height:140px;border-radius:70px;background:var(--bg);border:4px dashed #c7d2fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:52px;cursor:pointer;transition:.4s}
+.qv{width:28px;text-align:center;font-size:15px;font-weight:800}
+.sc2{width:120px;height:120px;border-radius:60px;background:var(--bg);
+  border:4px dashed #c7d2fe;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;font-size:46px;cursor:pointer;transition:.4s}
 .sc2.done{border:4px solid var(--grn);background:#d1fae5}
-.gr{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:13px;margin:10px 0}
-.gi{width:12px;height:12px;border-radius:6px;background:#94a3b8;flex-shrink:0;transition:.3s}
-.gi.on{background:var(--grn);box-shadow:0 0 0 4px rgba(16,185,129,.2)}
-.ws{display:flex;gap:4px;margin:10px 0}
+.gr{display:flex;align-items:center;gap:9px;background:var(--bg);
+  border-radius:11px;padding:12px;margin:9px 0}
+.gi{width:11px;height:11px;border-radius:6px;background:#94a3b8;flex-shrink:0;transition:.3s}
+.gi.on{background:var(--grn);box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+.ws{display:flex;gap:3px;margin:9px 0}
 .wd{flex:1;height:5px;border-radius:3px;background:var(--bd);transition:.3s}
 .wd.done{background:var(--grn)}.wd.curr{background:var(--amb)}
-.bd{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px}
-.bdt{font-size:13px;font-weight:800;color:var(--ind);margin-bottom:8px;display:flex;justify-content:space-between}
-.bc{font-size:12px;color:var(--sl);padding:7px 10px;background:var(--bg);border-radius:8px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.bd2{background:#fff;border-radius:11px;padding:11px;margin-bottom:7px}
+.bdt{font-size:12px;font-weight:800;color:var(--ind);margin-bottom:7px;
+  display:flex;justify-content:space-between;align-items:center}
+.bc{font-size:12px;color:var(--sl);padding:6px 9px;background:var(--bg);
+  border-radius:7px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+/* TABLE */
 table{width:100%;border-collapse:collapse}
-th{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap}
-td{font-size:13px;color:var(--sl);padding:11px 12px;border-bottom:1px solid var(--bg)}
-tr:last-child td{border-bottom:none}
-.tw{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);overflow-x:auto}
+th{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;
+  padding:9px 11px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap;background:#f8fafc}
+td{font-size:12px;color:var(--sl);padding:10px 11px;border-bottom:1px solid #f8fafc;vertical-align:top}
+tr:hover td{background:#fafafa}
+.tw{background:#fff;border-radius:13px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);overflow-x:auto}
+/* FORM ROW */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.frow3{grid-template-columns:1fr 1fr 1fr}
+.fcol{display:flex;flex-direction:column}
+/* OUTSTANDING HIGHLIGHT */
+.owe-high{color:var(--red);font-weight:800}
+.owe-mid{color:var(--amb);font-weight:700}
+.owe-clear{color:var(--grn);font-weight:700}
+/* STATUS STEPS */
+.step-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0}
+.step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.step-line{flex:1;height:2px;background:var(--bd);min-width:16px}
+.step-done{background:var(--grn);color:#fff}
+.step-curr{background:var(--amb);color:#fff}
+.step-todo{background:var(--bg);color:var(--mu)}
+/* AMOUNT */
+.amt-big{font-size:20px;font-weight:900;color:var(--sl)}
+.amt-red{color:var(--red)}
+.amt-grn{color:var(--grn)}
+/* TAG ROW */
+.tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
 </style>
 </head>
 <body>
@@ -124,30 +218,32 @@ tr:last-child td{border-bottom:none}
   <div class="sh" id="sh"></div>
 </div>
 
-<!-- LOGIN -->
+<!-- ════════════ LOGIN ════════════ -->
 <div id="login">
   <div class="lc">
     <div class="ll">📦</div>
     <div class="lh">SFA System</div>
-    <div class="ls">Sales Force Automation</div>
+    <div class="ls">Sales · Orders · Invoices · Warehouse</div>
     <div class="rt">
       <button class="rb on" onclick="setR('salesman',this)">🧑 Salesman</button>
-      <button class="rb" onclick="setR('admin',this)">Admin</button>
-      <button class="rb" onclick="setR('warehouse',this)">Warehouse</button>
+      <button class="rb" onclick="setR('admin',this)">👨‍💻 Admin</button>
+      <button class="rb" onclick="setR('warehouse',this)">🏭 Warehouse</button>
     </div>
     <input class="inp" id="em" type="email" placeholder="Email address">
     <input class="inp" id="pw" type="password" placeholder="Password">
-    <button class="btn bp bw" style="font-size:16px;padding:15px" onclick="doLogin()">Sign In →</button>
+    <button class="btn bp btn-lg" onclick="doLogin()">Sign In →</button>
     <div class="hint">Contact your admin for login credentials</div>
   </div>
 </div>
 
-<!-- APP -->
+<!-- ════════════ APP SHELL ════════════ -->
 <div id="app">
   <div class="tb">
     <div class="tbl">
       <button class="tbb" id="tbb" onclick="goBack()">←</button>
-      <div><div class="tbt" id="tbt">SFA</div></div>
+      <div>
+        <div class="tbt" id="tbt">SFA</div>
+      </div>
     </div>
     <div class="tbr">
       <div class="av" id="av">?</div>
@@ -162,52 +258,70 @@ tr:last-child td{border-bottom:none}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
 
 <script>
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+/* ══════════════════════════════════════════════════════════════
+   FIREBASE INIT
+   Collections used:
+     users, customers, orders, invoices, payments,
+     visits, items, beat_plans, returns
+══════════════════════════════════════════════════════════════ */
+const app     = firebase.initializeApp(firebaseConfig);
+const auth    = firebase.auth();
+const db      = firebase.firestore();
+const storage = firebase.storage();
 
-// ── STATE ──────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════
+   GLOBAL STATE
+══════════════════════════════════════════════════════════════ */
 const S = {
-  role:'salesman', user:null, uid:null,
-  customers:[], orders:[], payments:[], visits:[], beat:{},
-  products:[
-    {id:'p1',name:'Biscuits 200g',sku:'BISC200',price:25,unit:'pcs'},
-    {id:'p2',name:'Chips 100g',sku:'CHIP100',price:20,unit:'pcs'},
-    {id:'p3',name:'Namkeen 500g',sku:'NAM500',price:75,unit:'pcs'},
-    {id:'p4',name:'Soft Drink 2L',sku:'SDR2L',price:90,unit:'btl'},
-    {id:'p5',name:'Mineral Water',sku:'MW1L',price:20,unit:'btl'},
-    {id:'p6',name:'Juice 200ml',sku:'JT200',price:35,unit:'pcs'},
-  ],
-  cart:{}, curCust:null,
-  visitSelfie:false, visitGPS:false, gpsPct:0,
-  navStack:[], orderFilter:'ALL', selMode:'Cash',
+  role:'salesman', user:null, uid:null, userName:'',
+  // data caches
+  customers:[], orders:[], invoices:[], payments:[],
+  visits:[], items:[], beatPlan:{}, returns:[], allUsers:[],
+  // ui state
+  cart:{}, curCust:null, visitSelfie:false, visitGPS:false,
+  navStack:[], orderFilter:'ALL', payFilter:'ALL',
+  selMode:'Cash', adminSalesmanFilter:'',
+  selfieDataUrl:'',
 };
 
+/* ══════════════════════════════════════════════════════════════
+   NAV CONFIG per role
+══════════════════════════════════════════════════════════════ */
 const NAV = {
   salesman:[
-    {id:'dash',  icon:'🏠', label:'Home',    title:"Today's Beat"},
-    {id:'custs', icon:'🏪', label:'Shops',   title:'My Customers'},
-    {id:'visit', icon:'📍', label:'Visit',   title:'Log Visit'},
-    {id:'ords',  icon:'📦', label:'Orders',  title:'My Orders'},
-    {id:'pay',   icon:'💰', label:'Payment', title:'Record Payment'},
+    {id:'dash',   icon:'🏠', label:'Home',     title:"Today's Beat"},
+    {id:'custs',  icon:'🏪', label:'Shops',    title:'My Customers'},
+    {id:'visit',  icon:'📍', label:'Visit',    title:'Log Visit'},
+    {id:'ords',   icon:'📦', label:'Orders',   title:'My Orders'},
+    {id:'inv',    icon:'🧾', label:'Invoices', title:'Invoices'},
+    {id:'pay',    icon:'💰', label:'Payments', title:'Record Payment'},
   ],
   admin:[
     {id:'adash',  icon:'📊', label:'Dashboard', title:'Admin Dashboard'},
     {id:'aords',  icon:'📦', label:'Orders',    title:'All Orders'},
+    {id:'ainv',   icon:'🧾', label:'Invoices',  title:'All Invoices'},
     {id:'acusts', icon:'🏪', label:'Customers', title:'All Customers'},
-    {id:'abeat',  icon:'🗓', label:'Beat Plan', title:'Beat Planning'},
     {id:'apay',   icon:'💰', label:'Payments',  title:'Payments'},
+    {id:'avisits',icon:'📍', label:'Visits',    title:'Visit Log'},
+    {id:'aitems', icon:'📋', label:'Items',     title:'Item Master'},
+    {id:'abeat',  icon:'🗓', label:'Beat Plan', title:'Beat Planning'},
+    {id:'arets',  icon:'↩️', label:'Returns',   title:'Returns'},
   ],
   warehouse:[
-    {id:'wq', icon:'🏭', label:'Queue',     title:'Fulfillment Queue'},
-    {id:'wd', icon:'✅', label:'Delivered', title:'Delivered Orders'},
+    {id:'wq',  icon:'🏭', label:'Queue',     title:'Fulfillment Queue'},
+    {id:'winv',icon:'🧾', label:'Invoices',  title:'Invoices'},
+    {id:'wd',  icon:'✅', label:'Delivered', title:'Delivered Orders'},
+    {id:'wret',icon:'↩️', label:'Returns',   title:'Returns'},
   ],
 };
 
-// ── HELPERS ────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════════════════════════ */
 let curRole = 'salesman';
 function setR(r,el){
   curRole=r;
@@ -219,68 +333,78 @@ function toast(msg,t=''){
   el.textContent=msg; el.className='show '+t;
   clearTimeout(el._t); el._t=setTimeout(()=>el.className='',3200);
 }
-function osh(html){ document.getElementById('sh').innerHTML=html; document.getElementById('ov').classList.add('show'); }
+function osh(html){
+  document.getElementById('sh').innerHTML=html;
+  document.getElementById('ov').classList.add('show');
+}
 function csh(){ document.getElementById('ov').classList.remove('show'); }
 function money(n){ return '₹'+Number(n||0).toLocaleString('en-IN'); }
 function ts(){ return firebase.firestore.FieldValue.serverTimestamp(); }
+function nowStr(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(v){
+  if(!v) return '';
+  try{
+    const d=v.toDate?v.toDate():new Date(v);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  } catch(e){ return String(v); }
+}
+function isToday(v){
+  if(!v) return false;
+  try{
+    const d=v.toDate?v.toDate():new Date(v);
+    const n=new Date();
+    return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();
+  } catch(e){ return false; }
+}
+function mkDiv(cls,html){
+  const d=document.createElement('div');
+  d.className=cls||''; if(html) d.innerHTML=html; return d;
+}
+function uid6(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
+
+// Badge helper for statuses
 function badge(s){
-  const m={CONFIRMED:'bgg',PENDING_APPROVAL:'bam',REJECTED:'brd',DELIVERED:'bbl',PACKED:'bpu',READY:'bpu',PENDING:'bgr'};
-  return `<span class="bge ${m[s]||'bgr'}">${s.replace('_',' ')}</span>`;
-}
-function mkDiv(cls,html){ const d=document.createElement('div'); d.className=cls||''; if(html)d.innerHTML=html; return d; }
-function isToday(ts){
-  if(!ts) return false;
-  const d=ts.toDate?ts.toDate():new Date(ts);
-  const n=new Date();
-  return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();
+  const m={
+    CONFIRMED:'bgg',PENDING_APPROVAL:'bgam',REJECTED:'bgrd',
+    DELIVERED:'bgbl',PACKED:'bgpu',READY:'bgpu',PENDING:'bgr',
+    paid:'bgg',partial:'bgam',unpaid:'bgrd',overdue:'bgrd',
+    approved:'bgg',pending:'bgam',collected:'bgg',pending_pickup:'bgam',
+    order_taken:'bgg',no_order:'bgam',
+  };
+  const label=String(s||'').replace(/_/g,' ');
+  return `<span class="bge ${m[s]||'bgr'}">${label}</span>`;
 }
 
-// ── AUTH ───────────────────────────────────────────────────────
-auth.onAuthStateChanged(async function(user){
+// Outstanding colour helper
+function oweClass(n){
+  if(!n||n<=0) return 'owe-clear';
+  if(n>10000) return 'owe-high';
+  return 'owe-mid';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async user=>{
   if(user){
-    console.log("✅ Logged in UID:", user.uid);
-
-    try{
-      const snap = await db.collection('users').doc(user.uid).get();
-
-      console.log("🔥 Exists?", snap.exists);
-      console.log("🔥 Data:", snap.data());
-
-      if(!snap.exists){
-        alert("❌ User profile NOT found");
-        await auth.signOut();
-        return;
-      }
-
-      // ✅ CORRECT FLOW
-      S.uid = user.uid;
-      S.user = snap.data();
-      S.role = S.user.role || 'salesman';
-
-      document.getElementById('login').style.display='none';
-      document.getElementById('app').style.display='flex';
-
-      const init = (S.user.name || 'U')
-        .split(' ')
-        .map(w => w[0])
-        .join('')
-        .slice(0,2)
-        .toUpperCase();
-
-      document.getElementById('av').textContent = init;
-
-      buildNav();
-      await loadData();
-
-      const first = NAV[S.role][0].id;
-      S.navStack = [first];
-      render(first);
-
-      toast('Welcome, '+(S.user.name||'User'),'s');
-
-    } catch(e){
-      console.error("🔥 Firestore error:", e);
+    S.uid=user.uid;
+    const snap=await db.collection('users').doc(user.uid).get();
+    if(!snap.exists){
+      toast('User profile not found. Ask admin to create it.','e');
+      await auth.signOut(); return;
     }
+    S.user=snap.data();
+    S.role=S.user.role||'salesman';
+    S.userName=S.user.name||'User';
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='flex';
+    const init=S.userName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('av').textContent=init;
+    buildNav();
+    await loadAllData();
+    const first=NAV[S.role][0].id;
+    S.navStack=[first]; render(first);
+    toast('Welcome, '+S.userName.split(' ')[0]+'!','s');
   }
 });
 
@@ -295,235 +419,460 @@ function doLogout(){
   auth.signOut().then(()=>{
     document.getElementById('app').style.display='none';
     document.getElementById('login').style.display='flex';
-    Object.assign(S,{customers:[],orders:[],payments:[],visits:[],beat:{},cart:{},curCust:null,navStack:[]});
+    // clear state
+    Object.assign(S,{customers:[],orders:[],invoices:[],payments:[],
+      visits:[],items:[],beatPlan:{},returns:[],allUsers:[],
+      cart:{},curCust:null,visitSelfie:false,visitGPS:false,navStack:[]});
   });
 }
 
-// ── LOAD DATA ──────────────────────────────────────────────────
-async function loadData(){
-  try{
-    const [cs,os,ps,vs,bs]=await Promise.all([
-      db.collection('customers').orderBy('name').get(),
-      db.collection('orders').orderBy('createdAt','desc').limit(200).get(),
-      db.collection('payments').orderBy('createdAt','desc').limit(200).get(),
-      db.collection('visits').orderBy('createdAt','desc').limit(200).get(),
-      db.collection('beatPlans').limit(1).get(),
-    ]);
-    S.customers=cs.docs.map(d=>({id:d.id,...d.data()}));
-    S.orders   =os.docs.map(d=>({id:d.id,...d.data()}));
-    S.payments =ps.docs.map(d=>({id:d.id,...d.data()}));
-    S.visits   =vs.docs.map(d=>({id:d.id,...d.data()}));
-    if(!bs.empty) S.beat=bs.docs[0].data().plan||{};
-  } catch(e){ toast('Load error: '+e.message,'e'); }
+/* ══════════════════════════════════════════════════════════════
+   DATA LOADERS  — each loads a Firestore collection
+══════════════════════════════════════════════════════════════ */
+async function loadAllData(){
+  await Promise.all([
+    loadCustomers(), loadOrders(), loadInvoices(),
+    loadPayments(), loadVisits(), loadItems(),
+    loadBeatPlan(), loadReturns(), loadUsers(),
+  ]);
 }
 
-// ── NAVIGATION ─────────────────────────────────────────────────
+// CUSTOMERS — filtered by assignedSalesmanId for salesman role
+async function loadCustomers(){
+  try{
+    let q=db.collection('customers').orderBy('name');
+    if(S.role==='salesman') q=q.where('assignedSalesmanId','==',S.uid);
+    const snap=await q.get();
+    S.customers=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadCustomers',e); }
+}
+
+// ORDERS
+async function loadOrders(){
+  try{
+    let q=db.collection('orders').orderBy('createdAt','desc').limit(300);
+    if(S.role==='salesman') q=q.where('salesmanId','==',S.uid);
+    const snap=await q.get();
+    S.orders=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadOrders',e); }
+}
+
+// INVOICES — collection: invoices
+async function loadInvoices(){
+  try{
+    const snap=await db.collection('invoices').orderBy('createdAt','desc').limit(300).get();
+    S.invoices=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadInvoices',e); }
+}
+
+// PAYMENTS — collection: payments
+async function loadPayments(){
+  try{
+    let q=db.collection('payments').orderBy('createdAt','desc').limit(300);
+    if(S.role==='salesman') q=q.where('collectedBy','==',S.uid);
+    const snap=await q.get();
+    S.payments=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadPayments',e); }
+}
+
+// VISITS — collection: visits
+async function loadVisits(){
+  try{
+    let q=db.collection('visits').orderBy('createdAt','desc').limit(300);
+    if(S.role==='salesman') q=q.where('salesmanId','==',S.uid);
+    const snap=await q.get();
+    S.visits=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadVisits',e); }
+}
+
+// ITEMS (product master) — collection: items
+async function loadItems(){
+  try{
+    const snap=await db.collection('items').orderBy('name').get();
+    S.items=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // seed default items if empty
+    if(S.items.length===0 && S.role==='admin'){
+      const defaults=[
+        {name:'Biscuits 200g',sku:'BISC200',price:25,tax:5},
+        {name:'Chips 100g',sku:'CHIP100',price:20,tax:5},
+        {name:'Namkeen 500g',sku:'NAM500',price:75,tax:5},
+        {name:'Soft Drink 2L',sku:'SDR2L',price:90,tax:18},
+        {name:'Mineral Water 1L',sku:'MW1L',price:20,tax:0},
+        {name:'Juice 200ml',sku:'JT200',price:35,tax:12},
+      ];
+      for(const item of defaults){
+        const ref=await db.collection('items').add({...item,createdAt:ts()});
+        S.items.push({id:ref.id,...item});
+      }
+    }
+  } catch(e){ console.error('loadItems',e); }
+}
+
+// BEAT PLAN — collection: beat_plans
+async function loadBeatPlan(){
+  try{
+    let q=db.collection('beat_plans').limit(1);
+    if(S.role==='salesman') q=q.where('salesmanId','==',S.uid);
+    const snap=await q.get();
+    S.beatPlan=snap.empty?{}:snap.docs[0].data().plan||{};
+    S._beatDocId=snap.empty?null:snap.docs[0].id;
+  } catch(e){ console.error('loadBeatPlan',e); }
+}
+
+// RETURNS — collection: returns
+async function loadReturns(){
+  try{
+    let q=db.collection('returns').orderBy('createdAt','desc').limit(200);
+    if(S.role==='salesman') q=q.where('salesmanId','==',S.uid);
+    const snap=await q.get();
+    S.returns=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadReturns',e); }
+}
+
+// USERS — for admin assignment dropdowns
+async function loadUsers(){
+  try{
+    if(S.role!=='admin') return;
+    const snap=await db.collection('users').get();
+    S.allUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadUsers',e); }
+}
+
+// Outstanding per customer = sum(invoice.amount - invoice.paidAmount)
+function getOutstanding(customerId){
+  return S.invoices
+    .filter(inv=>inv.customerId===customerId && inv.status!=='paid')
+    .reduce((s,inv)=>s+((inv.amount||0)-(inv.paidAmount||0)),0);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════════ */
 function buildNav(){
   const items=NAV[S.role]||NAV.salesman;
   document.getElementById('bn').innerHTML=items.map(n=>
-    `<button class="bi" id="bn-${n.id}" onclick="go('${n.id}')"><span class="bic">${n.icon}</span>${n.label}</button>`
-  ).join('');
+    `<button class="bi" id="bn-${n.id}" onclick="go('${n.id}')">
+      <span class="bic">${n.icon}</span>${n.label}
+    </button>`).join('');
 }
 function go(pid){ S.navStack=[pid]; render(pid); }
 function push(pid){ S.navStack.push(pid); render(pid); }
-function goBack(){ if(S.navStack.length>1){ S.navStack.pop(); render(S.navStack[S.navStack.length-1]); } }
+function goBack(){
+  if(S.navStack.length>1){ S.navStack.pop(); render(S.navStack[S.navStack.length-1]); }
+}
 function render(pid){
   document.querySelectorAll('.bi').forEach(b=>b.classList.remove('on'));
   const nb=document.getElementById('bn-'+pid); if(nb) nb.classList.add('on');
   document.getElementById('tbb').classList[S.navStack.length>1?'add':'remove']('show');
   const ni=Object.values(NAV).flat().find(n=>n.id===pid);
   document.getElementById('tbt').textContent=ni?ni.title:'SFA';
-  const pages={dash:pgDash,custs:pgCusts,visit:pgVisit,ords:pgOrds,pay:pgPay,
-    adash:pgAdash,aords:pgAords,acusts:pgAcusts,abeat:pgAbeat,apay:pgApay,wq:pgWq,wd:pgWd};
+  const pages={
+    // salesman
+    dash:pgDash, custs:pgCusts, visit:pgVisit, ords:pgOrds,
+    inv:pgInv, pay:pgPay,
+    // admin
+    adash:pgAdash, aords:pgAords, ainv:pgAinv, acusts:pgAcusts,
+    apay:pgApay, avisits:pgAvisits, aitems:pgAitems,
+    abeat:pgAbeat, arets:pgArets,
+    // warehouse
+    wq:pgWq, winv:pgWinv, wd:pgWd, wret:pgWret,
+  };
   const c=document.getElementById('ct'); c.innerHTML='';
   if(pages[pid]) c.appendChild(pages[pid]()); c.scrollTop=0;
 }
 
-// ══════════════ SALESMAN ══════════════
+/* ══════════════════════════════════════════════════════════════
+   ██████████  SALESMAN PAGES  ██████████
+══════════════════════════════════════════════════════════════ */
 
-// DASHBOARD
+/* ── DASHBOARD ─────────────────────────────────────── */
 function pgDash(){
   const day=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
-  const ids=S.beat[day]||[];
-  const todayC=ids.length ? ids.map(id=>S.customers.find(c=>c.id===id)).filter(Boolean)
-    : S.customers.filter(c=>c.isActive!==false&&(!c.assignedTo||c.assignedTo===S.uid));
-  const myOrds=S.orders.filter(o=>o.salesmanId===S.uid);
-  const todayColl=S.payments.filter(p=>p.salesmanId===S.uid&&isToday(p.createdAt)).reduce((s,p)=>s+(p.amount||0),0);
-  const pending=S.orders.filter(o=>o.status==='PENDING_APPROVAL').length;
+  const ids=(S.beatPlan[day]||[]);
+  const todayC=ids.length
+    ? ids.map(id=>S.customers.find(c=>c.id===id)).filter(Boolean)
+    : S.customers.filter(c=>c.isActive!==false);
+  const todayVisits=S.visits.filter(v=>v.salesmanId===S.uid&&isToday(v.createdAt));
+  const todayOrds=S.orders.filter(o=>o.salesmanId===S.uid&&isToday(o.createdAt));
+  const todayColl=S.payments.filter(p=>p.collectedBy===S.uid&&isToday(p.createdAt))
+    .reduce((s,p)=>s+(p.amount||0),0);
+  const pendingAppr=S.orders.filter(o=>o.status==='PENDING_APPROVAL').length;
   const d=mkDiv('pg');
   d.innerHTML=`
     <div class="pt">Good morning 👋</div>
     <div class="ps">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})} · ${day}</div>
     <div class="sg">
-      <div class="st" style="border-color:var(--ind)"><div class="sv" style="color:var(--ind)">${S.visits.filter(v=>v.salesmanId===S.uid&&isToday(v.createdAt)&&v.valid).length}</div><div class="sl2">Visits today</div></div>
-      <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${myOrds.filter(o=>isToday(o.createdAt)).length}</div><div class="sl2">Orders today</div></div>
-      <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${money(todayColl)}</div><div class="sl2">Collected today</div></div>
-      <div class="st" style="border-color:var(--pur)"><div class="sv" style="color:var(--pur)">${todayC.length}</div><div class="sl2">Shops today</div></div>
+      <div class="st" style="border-color:var(--ind)">
+        <div class="sv" style="color:var(--ind)">${todayVisits.filter(v=>v.valid).length}</div>
+        <div class="sl2">Visits today</div>
+      </div>
+      <div class="st" style="border-color:var(--grn)">
+        <div class="sv" style="color:var(--grn)">${todayOrds.length}</div>
+        <div class="sl2">Orders today</div>
+      </div>
+      <div class="st" style="border-color:var(--amb)">
+        <div class="sv" style="color:var(--amb)">${money(todayColl)}</div>
+        <div class="sl2">Collected today</div>
+      </div>
+      <div class="st" style="border-color:var(--pur)">
+        <div class="sv" style="color:var(--pur)">${todayC.length}</div>
+        <div class="sl2">Shops today</div>
+      </div>
     </div>
-    ${pending?`<div class="ab aab" style="cursor:pointer" onclick="go('ords')"><span style="font-size:22px">⚠️</span><div><b>${pending} order(s) pending approval</b><br><span style="font-size:12px">Dues threshold exceeded · Tap to view</span></div></div>`:''}
-    <div class="sc">Today's Customers (${day})</div>
-    ${todayC.length ? todayC.map(c=>`
-      <div class="li">
+    ${pendingAppr?`<div class="ab aab" style="cursor:pointer" onclick="go('ords')">
+      <span style="font-size:20px">⚠️</span>
+      <div><b>${pendingAppr} order(s) pending approval</b><br>
+      <span style="font-size:11px">High dues — admin action needed</span></div>
+    </div>`:''}
+    <div class="sc">Today's Beat — ${day} (${todayC.length} shops)</div>
+    ${todayC.length ? todayC.map(c=>{
+      const owe=getOutstanding(c.id);
+      const visited=S.visits.some(v=>v.customerId===c.id&&isToday(v.createdAt)&&v.valid);
+      return `<div class="li">
         <div class="lim">
           <div class="lit">${c.name}</div>
-          <div class="lis">${c.address||c.addr||''}</div>
-          <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
-            ${(c.dues||0)>10000?`<span class="bge brd">⚠ Dues ${money(c.dues)}</span>`:(c.dues||0)>0?`<span class="bge bam">Dues ${money(c.dues)}</span>`:`<span class="bge bgg">Clear</span>`}
-            <span class="bge bgr">${c.category||''}</span>
+          <div class="lis">📞 ${c.phone||''} · ${c.category||''}</div>
+          <div class="tag-row">
+            ${visited?`<span class="bge bgg">✓ Visited</span>`:`<span class="bge bgr">Not visited</span>`}
+            ${owe>0?`<span class="bge ${owe>10000?'bgrd':'bgam'}">Dues ${money(owe)}</span>`:`<span class="bge bgg">Clear</span>`}
           </div>
         </div>
         <button class="btn bp bsm" onclick="startVisit('${c.id}')">Visit →</button>
-      </div>`).join('')
-    : `<div class="es"><div class="ei">🗓</div><div class="et">No customers scheduled</div><div style="font-size:13px;color:var(--mu);margin-top:6px">Admin needs to set up your beat plan</div></div>`}`;
+      </div>`;
+    }).join('')
+    : `<div class="es"><div class="ei">🗓</div><div class="et">No customers in today's beat</div>
+       <div style="font-size:12px;color:var(--mu);margin-top:6px">Admin hasn't set up your beat plan yet</div>
+       </div>`}`;
   return d;
 }
 function startVisit(cid){
   S.curCust=S.customers.find(c=>c.id===cid);
-  S.visitSelfie=false; S.visitGPS=false; S.gpsPct=0; go('visit');
+  S.visitSelfie=false; S.visitGPS=false; S.selfieDataUrl=''; go('visit');
 }
 
-// CUSTOMERS
+/* ── CUSTOMERS (salesman) ──────────────────────────── */
 function pgCusts(){
   const d=mkDiv('pg');
-  d.innerHTML=`<input class="si" placeholder="Search shops..." oninput="srchC(this.value)">
+  d.innerHTML=`
+    <input class="si" placeholder="Search shops..." oninput="srchC(this.value)">
     <div class="pr">
       <div class="pl on" onclick="fltC('all',this)">All</div>
       <div class="pl" onclick="fltC('active',this)">Active</div>
       <div class="pl" onclick="fltC('inactive',this)">Inactive</div>
+      <div class="pl" onclick="fltC('dues',this)">Has Dues</div>
     </div>
-    <div id="cl">${rlc(S.customers.filter(c=>!c.assignedTo||c.assignedTo===S.uid))}</div>
-    <button class="btn bp bw" style="margin-top:12px" onclick="addCsh()">+ Add New Customer</button>`;
+    <div id="cl">${rlcSalesman(S.customers)}</div>`;
   return d;
 }
-function rlc(custs){
+function rlcSalesman(custs){
   if(!custs.length) return `<div class="es"><div class="ei">🔍</div><div class="et">No customers found</div></div>`;
-  return custs.map(c=>`<div class="li">
-    <div class="lim">
-      <div class="lit">${c.name}</div>
-      <div class="lis">📞 ${c.phone||''} · ${c.category||''}</div>
-      <div class="lis2">📍 ${c.address||c.addr||''}</div>
-      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
-        <span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span>
-        ${(c.dues||0)>0?`<span class="bge ${(c.dues||0)>10000?'brd':'bam'}">Dues ${money(c.dues)}</span>`:''}
+  return custs.map(c=>{
+    const owe=getOutstanding(c.id);
+    return `<div class="li" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div class="lim">
+          <div class="lit">${c.name}</div>
+          <div class="lis">📞 ${c.phone||''} · ${c.category||''}</div>
+          <div class="lis2">📍 ${c.address||''}</div>
+          <div class="tag-row">
+            <span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span>
+            ${owe>0?`<span class="bge ${owe>10000?'bgrd':'bgam'}">Dues ${money(owe)}</span>`:`<span class="bge bgg">Clear</span>`}
+          </div>
+        </div>
+        ${c.isActive!==false?`<button class="btn bp bsm" onclick="startVisit('${c.id}')">Visit</button>`:''}
       </div>
-    </div>
-    ${c.isActive!==false?`<button class="btn bp bsm" onclick="startVisit('${c.id}')">Visit</button>`:''}
-  </div>`).join('');
+      <div class="rbs">
+        <button class="btn bgy bsm" onclick="viewCustInvoices('${c.id}')">🧾 Invoices</button>
+        <button class="btn bgy bsm" onclick="newOrder('${c.id}')">📦 Order</button>
+        <button class="btn bgy bsm" onclick="newReturn('${c.id}')">↩️ Return</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 function srchC(q){
-  document.getElementById('cl').innerHTML=rlc(S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q)));
+  const f=S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q));
+  document.getElementById('cl').innerHTML=rlcSalesman(f);
 }
 function fltC(f,el){
   document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
-  const f2=f==='all'?S.customers:S.customers.filter(c=>f==='active'?c.isActive!==false:c.isActive===false);
-  document.getElementById('cl').innerHTML=rlc(f2);
+  let c=S.customers;
+  if(f==='active') c=c.filter(x=>x.isActive!==false);
+  else if(f==='inactive') c=c.filter(x=>x.isActive===false);
+  else if(f==='dues') c=c.filter(x=>getOutstanding(x.id)>0);
+  document.getElementById('cl').innerHTML=rlcSalesman(c);
 }
-function addCsh(){
-  osh(`<div class="sh-t">Add Customer <button class="sh-x" onclick="csh()">✕</button></div>
-    <span class="lbl">Shop name *</span>
-    <input class="inp" id="nc-n" placeholder="e.g. Sharma Kirana" style="margin-bottom:0">
-    <span class="lbl">Phone number *</span>
-    <input class="inp" id="nc-p" type="tel" placeholder="10-digit mobile" style="margin-bottom:0">
-    <span class="lbl">Full address *</span>
-    <input class="inp" id="nc-a" placeholder="Shop address" style="margin-bottom:0">
-    <span class="lbl">Category</span>
-    <select class="inp fs" id="nc-c"><option>FMCG</option><option>Beverages</option><option>Snacks</option><option>Dairy</option></select>
-    <span class="lbl">GSTN (optional)</span>
-    <input class="inp" id="nc-g" placeholder="27AAPFU0939F1ZV" style="margin-bottom:0">
-    <div class="ab agb" style="margin:12px 0">📍 GPS location will be captured automatically</div>
-    <button class="btn bp bw" style="margin-top:4px" onclick="saveCust()">Save Customer</button>`);
-}
-async function saveCust(){
-  const n=document.getElementById('nc-n').value.trim();
-  const p=document.getElementById('nc-p').value.trim();
-  const a=document.getElementById('nc-a').value.trim();
-  const cat=document.getElementById('nc-c').value;
-  const g=document.getElementById('nc-g').value.trim();
-  if(!n||!p||!a){ toast('Fill all required fields','e'); return; }
-  try{
-    const ref=await db.collection('customers').add({name:n,phone:p,address:a,addr:a,category:cat,gstn:g,assignedTo:S.uid,isActive:true,dues:0,lat:0,lng:0,createdAt:ts(),createdBy:S.uid});
-    S.customers.push({id:ref.id,name:n,phone:p,address:a,addr:a,category:cat,gstn:g,assignedTo:S.uid,isActive:true,dues:0});
-    csh(); toast('Customer added!','s'); go('custs');
-  } catch(e){ toast(e.message,'e'); }
+function viewCustInvoices(cid){
+  const cust=S.customers.find(c=>c.id===cid);
+  const invs=S.invoices.filter(i=>i.customerId===cid);
+  const owe=getOutstanding(cid);
+  osh(`<div class="sh-t">Invoices: ${cust?cust.name:cid} <button class="sh-x" onclick="csh()">✕</button></div>
+    <div class="ab ${owe>0?'aab':'agb'}" style="margin-bottom:12px">
+      <span>${owe>0?'⚠️':'✅'}</span>
+      <div><b>Outstanding: ${money(owe)}</b></div>
+    </div>
+    ${invs.length ? invs.map(inv=>`
+      <div class="li" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between">
+          <div>
+            <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${inv.invoiceId||inv.id.slice(-8).toUpperCase()}</div>
+            <div class="lit">Order #${(inv.orderId||'').slice(-6).toUpperCase()}</div>
+            <div class="lis">Due: ${fmtDate(inv.dueDate)} · Paid: ${money(inv.paidAmount)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="amt-big">${money(inv.amount)}</div>
+            ${badge(inv.status)}
+          </div>
+        </div>
+        ${inv.status!=='paid'?`<div class="rbs">
+          <button class="btn bp bsm" onclick="csh();payAgainstInvoice('${inv.id}','${cid}')">💰 Pay Now</button>
+        </div>`:''}
+      </div>`).join('')
+    : `<div class="es" style="padding:20px"><div class="et">No invoices yet</div></div>`}
+  `);
 }
 
-// VISIT
+/* ── VISIT (salesman) ──────────────────────────────── */
 function pgVisit(){
   const c=S.curCust;
   const ok=S.visitSelfie&&S.visitGPS;
   const d=mkDiv('pg');
   d.innerHTML=`
-    ${c?`<div class="card"><div style="font-size:14px;font-weight:700;color:var(--sl)">${c.name}</div>
-      <div style="font-size:12px;color:var(--mu);margin-top:2px">📍 ${c.address||c.addr||''}</div>
-      ${(c.dues||0)>0?`<div style="margin-top:6px"><span class="bge ${(c.dues||0)>10000?'brd':'bam'}">Dues ${money(c.dues)}</span></div>`:''}</div>`
-    :`<div class="ab aab">Select a customer from Home or Shops tab first</div>`}
-    <div class="card" style="text-align:center;padding:22px">
-      <div class="sc2 ${S.visitSelfie?'done':''}" id="sc-btn" onclick="takeSelfie()">${S.visitSelfie?'🤳':'📷'}</div>
-      <div style="font-weight:700;font-size:15px;color:var(--sl)">Step 1 — Take Selfie</div>
-      <div style="font-size:12px;color:var(--mu);margin:6px 0 13px">Stand in front of the shop</div>
-      <button class="btn ${S.visitSelfie?'bg2':'bp'} bw" onclick="takeSelfie()">${S.visitSelfie?'✓ Captured — Retake':'📷 Take Selfie'}</button>
+    ${c?`<div class="card">
+      <div style="font-size:14px;font-weight:700;color:var(--sl)">${c.name}</div>
+      <div style="font-size:12px;color:var(--mu);margin-top:2px">📍 ${c.address||''}</div>
+      ${getOutstanding(c.id)>0?`<div style="margin-top:6px">
+        <span class="bge ${getOutstanding(c.id)>10000?'bgrd':'bgam'}">Dues ${money(getOutstanding(c.id))}</span>
+      </div>`:''}
+    </div>`
+    :`<div class="ab aab">No customer selected — go to Home or Shops and tap Visit</div>`}
+
+    <div class="card" style="text-align:center;padding:20px">
+      <div class="sc2 ${S.visitSelfie?'done':''}" id="sc-btn" onclick="takeSelfie()">
+        ${S.visitSelfie?'🤳':'📷'}
+      </div>
+      <div style="font-weight:700;font-size:14px;color:var(--sl)">Step 1 — Take Selfie</div>
+      <div style="font-size:12px;color:var(--mu);margin:5px 0 12px">Stand in front of the shop</div>
+      <button class="btn ${S.visitSelfie?'bg2':'bp'} bw" onclick="takeSelfie()">
+        ${S.visitSelfie?'✓ Selfie Captured — Retake':'📷 Take Selfie'}
+      </button>
     </div>
+
     <div class="card">
-      <div style="font-weight:700;font-size:15px;color:var(--sl);margin-bottom:4px">Step 2 — Capture GPS</div>
-      <div style="font-size:12px;color:var(--mu);margin-bottom:10px">Must be within 200m of shop</div>
+      <div style="font-weight:700;font-size:14px;color:var(--sl);margin-bottom:4px">Step 2 — Capture GPS</div>
+      <div style="font-size:12px;color:var(--mu);margin-bottom:9px">Must be within 200m of shop</div>
       <div class="gr">
         <div class="gi ${S.visitGPS?'on':''}" id="gi"></div>
-        <span id="gt" style="font-size:13px;color:${S.visitGPS?'#059669':'var(--mu)'}">${S.visitGPS?'Location verified ✓':'Not captured yet'}</span>
+        <span id="gt" style="font-size:13px;color:${S.visitGPS?'#059669':'var(--mu)'}">
+          ${S.visitGPS?'Location verified ✓':'Not captured yet'}
+        </span>
       </div>
-      <div class="pw"><div class="pf" id="gpf" style="width:${S.gpsPct}%"></div></div>
-      <button class="btn ${S.visitGPS?'bg2':'bp'} bw" onclick="capGPS()">${S.visitGPS?'✓ GPS Captured':'📍 Get My Location'}</button>
+      <div class="pw"><div class="pf" id="gpf" style="width:${S.visitGPS?100:0}%"></div></div>
+      <button class="btn ${S.visitGPS?'bg2':'bp'} bw" onclick="capGPS()">
+        ${S.visitGPS?'✓ GPS Captured':'📍 Get My Location'}
+      </button>
     </div>
-    <button class="btn ${ok?'bg2':'bgy'} bw" style="padding:16px;font-size:16px;margin-top:4px"
+
+    <span class="lbl">Visit Outcome</span>
+    <div class="mr" style="margin-bottom:10px">
+      <button class="mb on" id="vt-order" onclick="setVType('order_taken',this)">📦 Order Taken</button>
+      <button class="mb" id="vt-noorder" onclick="setVType('no_order',this)">🚫 No Order</button>
+    </div>
+
+    <span class="lbl">Remarks (required if no order)</span>
+    <textarea class="inp" id="v-remarks" rows="2" placeholder="Any notes about this visit..." style="resize:none"></textarea>
+
+    <button class="btn ${ok?'bg2':'bgy'} bw" style="padding:14px;font-size:15px"
       ${ok?'onclick="subVisit()"':''} ${ok?'':'disabled'}>
-      ${ok?'✓ Submit Visit & Create Order →':'Complete both steps above to continue'}
+      ${ok?'✓ Submit Visit →':'Complete Steps 1 & 2 above to continue'}
     </button>`;
+  window._visitType='order_taken';
   return d;
 }
+function setVType(t,el){
+  window._visitType=t;
+  document.querySelectorAll('#vt-order,#vt-noorder').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
 function takeSelfie(){
+  // Simulate camera: in production, use <input type=file accept=image/*>
   toast('Opening camera...');
   setTimeout(()=>{
-    S.visitSelfie=true; toast('Selfie captured!','s');
-    const b=document.getElementById('sc-btn'); if(b){b.textContent='🤳';b.classList.add('done');}
+    S.visitSelfie=true;
+    S.selfieDataUrl='selfie_captured';
+    toast('Selfie captured!','s');
+    const b=document.getElementById('sc-btn');
+    if(b){ b.textContent='🤳'; b.classList.add('done'); }
     chkVR();
-  },1200);
+  },1000);
 }
 function capGPS(){
-  const setDone=()=>{
-    S.visitGPS=true; S.gpsPct=100;
-    const gi=document.getElementById('gi'); const gt=document.getElementById('gt'); const gpf=document.getElementById('gpf');
+  const done=()=>{
+    S.visitGPS=true;
+    const gi=document.getElementById('gi');
+    const gt=document.getElementById('gt');
+    const gpf=document.getElementById('gpf');
     if(gi) gi.classList.add('on');
-    if(gt){gt.textContent='Location verified ✓';gt.style.color='#059669';}
+    if(gt){ gt.textContent='Location verified ✓'; gt.style.color='#059669'; }
     if(gpf) gpf.style.width='100%';
     toast('Location captured!','s'); chkVR();
   };
   if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(()=>setDone(), ()=>setDone());
-  } else { setDone(); }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      S._lat=pos.coords.latitude; S._lng=pos.coords.longitude; done();
+    }, ()=>done());
+  } else { done(); }
 }
 function chkVR(){
   if(S.visitSelfie&&S.visitGPS){
     const sb=document.querySelector('button.bgy[disabled]');
-    if(sb){sb.className='btn bg2 bw';sb.style.cssText='padding:16px;font-size:16px;margin-top:4px;width:100%';sb.removeAttribute('disabled');sb.textContent='✓ Submit Visit & Create Order →';sb.onclick=subVisit;}
+    if(sb){
+      sb.className='btn bg2 bw';
+      sb.style.cssText='padding:14px;font-size:15px;width:100%';
+      sb.removeAttribute('disabled');
+      sb.textContent='✓ Submit Visit →';
+      sb.onclick=subVisit;
+    }
   }
 }
 async function subVisit(){
-  if(!S.curCust){toast('No customer selected','e');return;}
+  if(!S.curCust){ toast('No customer selected','e'); return; }
+  const remarks=document.getElementById('v-remarks')?document.getElementById('v-remarks').value.trim():'';
+  const vtype=window._visitType||'order_taken';
+  if(vtype==='no_order'&&!remarks){ toast('Remarks required when no order','e'); return; }
   try{
-    await db.collection('visits').add({customerId:S.curCust.id,customerName:S.curCust.name,salesmanId:S.uid,salesmanName:S.user.name,valid:true,distance:87,createdAt:ts()});
-    toast('Visit logged!','s'); S.cart={};
-    setTimeout(()=>{ showOrdSh(S.curCust); go('ords'); },600);
+    const data={
+      customerId:S.curCust.id, customerName:S.curCust.name,
+      salesmanId:S.uid, salesmanName:S.userName,
+      status:vtype, remarks,
+      lat:S._lat||0, lng:S._lng||0,
+      selfieUrl:S.selfieDataUrl||'',
+      valid:true,
+      createdAt:ts(),
+    };
+    const ref=await db.collection('visits').add(data);
+    S.visits.unshift({id:ref.id,...data});
+    toast('Visit logged!','s');
+    S.cart={};
+    if(vtype==='order_taken'){
+      setTimeout(()=>{ showOrdSh(S.curCust); go('ords'); },600);
+    } else {
+      go('dash');
+    }
   } catch(e){ toast(e.message,'e'); }
 }
 
-// ORDERS (salesman)
+/* ── ORDERS (salesman) ─────────────────────────────── */
 function pgOrds(){
   const f=S.orderFilter;
   const myOrds=S.role==='admin'?S.orders:S.orders.filter(o=>o.salesmanId===S.uid);
   const filtered=f==='ALL'?myOrds:myOrds.filter(o=>o.status===f);
   const d=mkDiv('pg');
-  d.innerHTML=`${S.role==='salesman'?`<button class="btn bp bw" style="margin-bottom:13px" onclick="pickCust()">+ New Order</button>`:''}
+  d.innerHTML=`
+    ${S.role==='salesman'?`<button class="btn bp bw" style="margin-bottom:12px" onclick="pickCustForOrder()">+ New Order</button>`:''}
     <div class="pr">
-      ${['ALL','CONFIRMED','PENDING_APPROVAL','PACKED','DELIVERED'].map(s=>`<div class="pl ${f===s?'on':''}" onclick="setOF('${s}',this)">${s.replace('_',' ')}</div>`).join('')}
+      ${['ALL','CONFIRMED','PENDING_APPROVAL','PACKED','DELIVERED','REJECTED'].map(s=>
+        `<div class="pl ${f===s?'on':''}" onclick="setOF('${s}',this)">${s.replace(/_/g,' ')}</div>`
+      ).join('')}
     </div>
     <div id="ol">${rOL(filtered)}</div>`;
   return d;
@@ -531,19 +880,27 @@ function pgOrds(){
 function rOL(ords){
   if(!ords.length) return `<div class="es"><div class="ei">📦</div><div class="et">No orders found</div></div>`;
   const isAdm=S.role==='admin';
-  return ords.map(o=>`<div class="li" style="flex-direction:column;align-items:stretch">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div>
-        <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${o.id.slice(-8).toUpperCase()}</div>
-        <div class="lit">${o.customerName||''}</div>
-        <div class="lis">${(o.items||[]).length} items · ${money(o.totalAmount||o.total||0)}</div>
-        <div class="lis2">${o.createdAt?(o.createdAt.toDate?o.createdAt.toDate().toLocaleDateString('en-IN'):o.createdAt):''}</div>
+  return ords.map(o=>`
+    <div class="li" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div class="lim">
+          <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${(o.orderId||o.id.slice(-8)).toUpperCase()}</div>
+          <div class="lit">${o.customerName||''}</div>
+          <div class="lis">${(o.items||[]).length} items · ${money(o.totalAmount||0)}</div>
+          <div class="lis2">${fmtDate(o.createdAt)} ${o.salesmanName?'· '+o.salesmanName:''}</div>
+        </div>
+        ${badge(o.status)}
       </div>
-      ${badge(o.status)}
-    </div>
-    <div style="margin-top:8px;font-size:12px;color:var(--mu)">${(o.items||[]).slice(0,3).map(i=>i.name+' ×'+(i.qty||1)).join(' · ')}</div>
-    ${isAdm&&o.status==='PENDING_APPROVAL'?`<div class="rbs"><button class="btn bg2 bsm" onclick="appOrd('${o.id}')">✓ Approve</button><button class="btn br2 bsm" onclick="rejOrd('${o.id}')">✕ Reject</button></div>`:''}
-  </div>`).join('');
+      <div style="margin-top:7px;font-size:11px;color:var(--mu)">
+        ${(o.items||[]).slice(0,3).map(i=>`<span style="background:var(--bg);padding:2px 7px;border-radius:5px;margin:2px;display:inline-block">${i.name} ×${i.qty}</span>`).join('')}
+      </div>
+      <div class="rbs">
+        ${isAdm&&o.status==='PENDING_APPROVAL'?
+          `<button class="btn bg2 bsm" onclick="appOrd('${o.id}')">✓ Approve</button>
+           <button class="btn br2 bsm" onclick="rejOrd('${o.id}')">✕ Reject</button>`:''}
+        ${isAdm?`<button class="btn bgy bsm" onclick="editOrder('${o.id}')">✏️ Edit</button>`:''}
+      </div>
+    </div>`).join('');
 }
 function setOF(f,el){
   S.orderFilter=f;
@@ -551,95 +908,204 @@ function setOF(f,el){
   const myOrds=S.role==='admin'?S.orders:S.orders.filter(o=>o.salesmanId===S.uid);
   document.getElementById('ol').innerHTML=rOL(f==='ALL'?myOrds:myOrds.filter(o=>o.status===f));
 }
-function pickCust(){
-  const custs=S.customers.filter(c=>c.isActive!==false&&(!c.assignedTo||c.assignedTo===S.uid));
+function pickCustForOrder(){
+  const custs=S.customers.filter(c=>c.isActive!==false);
   osh(`<div class="sh-t">Select Customer <button class="sh-x" onclick="csh()">✕</button></div>
-    ${custs.map(c=>`<div class="li" onclick="csh();showOrdSh(S.customers.find(x=>x.id==='${c.id}'))" style="cursor:pointer">
-      <div class="lim"><div class="lit">${c.name}</div><div class="lis">${c.address||c.addr||''}</div></div>
-      <span class="bge ${(c.dues||0)>10000?'brd':(c.dues||0)>0?'bam':'bgg'}">${(c.dues||0)>0?money(c.dues)+' dues':'Clear'}</span>
-    </div>`).join('')}`);
+    ${custs.map(c=>{
+      const owe=getOutstanding(c.id);
+      return `<div class="li" onclick="csh();newOrder('${c.id}')" style="cursor:pointer">
+        <div class="lim"><div class="lit">${c.name}</div><div class="lis">${c.address||''}</div></div>
+        <span class="bge ${owe>10000?'bgrd':owe>0?'bgam':'bgg'}">${owe>0?money(owe)+' dues':'Clear'}</span>
+      </div>`;
+    }).join('')}`);
+}
+function newOrder(cid){
+  const cust=S.customers.find(c=>c.id===cid);
+  if(!cust){ toast('Customer not found','e'); return; }
+  showOrdSh(cust);
 }
 function showOrdSh(cust){
   if(!cust) return; S.cart={};
-  osh(`<div class="sh-t">Order: ${cust.name} <button class="sh-x" onclick="csh()">✕</button></div>
-    ${(cust.dues||0)>0?`<div class="ab aab" style="margin-bottom:12px"><span>⚠️</span>Dues: <b>${money(cust.dues)}</b>${(cust.dues||0)>10000?' · Needs approval':''}</div>`:''}
-    ${S.products.map(p=>`<div class="li" style="align-items:center">
-      <div class="lim"><div class="lit">${p.name}</div><div class="lis">${money(p.price)} / ${p.unit}</div></div>
-      <div class="qc">
-        <button class="qb" onclick="cQ('${p.id}',${p.price},-1)">−</button>
-        <span class="qv" id="q-${p.id}">0</span>
-        <button class="qb qbp" onclick="cQ('${p.id}',${p.price},1)">+</button>
-      </div>
-    </div>`).join('')}
+  if(!S.items.length){ toast('No items in master. Admin must add items first.','w'); return; }
+  const owe=getOutstanding(cust.id);
+  osh(`<div class="sh-t">New Order: ${cust.name} <button class="sh-x" onclick="csh()">✕</button></div>
+    ${owe>0?`<div class="ab aab" style="margin-bottom:10px">
+      <span>⚠️</span><div>Outstanding dues: <b>${money(owe)}</b>${owe>10000?' · Will need admin approval':''}</div>
+    </div>`:''}
+    ${S.items.map(p=>`
+      <div class="li" style="align-items:center;padding:10px 12px">
+        <div class="lim">
+          <div class="lit">${p.name}</div>
+          <div class="lis">${money(p.price)} / unit · Tax ${p.tax||0}%</div>
+        </div>
+        <div class="qc">
+          <button class="qb" onclick="cQ('${p.id}',${p.price},${p.tax||0},-1)">−</button>
+          <span class="qv" id="q-${p.id}">0</span>
+          <button class="qb qbp" onclick="cQ('${p.id}',${p.price},${p.tax||0},1)">+</button>
+        </div>
+      </div>`).join('')}
     <div class="dv"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <span style="font-size:14px;color:var(--mu)">Total</span>
-      <span style="font-size:24px;font-weight:900;color:var(--sl)" id="ctot">${money(0)}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;color:var(--mu)">Order Total (incl. tax)</span>
+      <span class="amt-big" id="ctot">${money(0)}</span>
     </div>
-    <button class="btn bg2 bw" style="padding:15px;font-size:16px" onclick="placeOrd('${cust.id}','${cust.name}',${cust.dues||0})">Place Order →</button>`);
+    <button class="btn bg2 btn-lg" onclick="placeOrd('${cust.id}','${cust.name}',${owe})">Place Order →</button>`);
 }
-function cQ(pid,price,delta){
+function cQ(pid,price,tax,delta){
   S.cart[pid]=Math.max(0,(S.cart[pid]||0)+delta);
   const el=document.getElementById('q-'+pid); if(el) el.textContent=S.cart[pid];
-  const total=Object.entries(S.cart).reduce((s,[id,q])=>{const p=S.products.find(x=>x.id===id);return s+(p?p.price*q:0);},0);
+  const total=Object.entries(S.cart).reduce((s,[id,q])=>{
+    const p=S.items.find(x=>x.id===id);
+    if(!p) return s;
+    const linePrice=p.price*q;
+    const lineTax=linePrice*(p.tax||0)/100;
+    return s+linePrice+lineTax;
+  },0);
   const tel=document.getElementById('ctot'); if(tel) tel.textContent=money(total);
 }
-async function placeOrd(cid,cname,dues){
-  const items=Object.entries(S.cart).filter(([,q])=>q>0).map(([id,q])=>{
-    const p=S.products.find(x=>x.id===id);
-    return{productId:id,name:p.name,sku:p.sku,price:p.price,qty:q,subtotal:p.price*q};
+async function placeOrd(cid,cname,owe){
+  const cartItems=Object.entries(S.cart).filter(([,q])=>q>0).map(([id,q])=>{
+    const p=S.items.find(x=>x.id===id);
+    const linePrice=p.price*q;
+    const lineTax=linePrice*(p.tax||0)/100;
+    return{productId:id,name:p.name,sku:p.sku,price:p.price,qty:q,tax:p.tax||0,
+      subtotal:linePrice,taxAmount:lineTax,lineTotal:linePrice+lineTax};
   });
-  if(!items.length){toast('Add at least one item','e');return;}
-  const total=items.reduce((s,i)=>s+i.subtotal,0);
-  const status=(dues+total>10000)?'PENDING_APPROVAL':'CONFIRMED';
+  if(!cartItems.length){ toast('Add at least one item','e'); return; }
+  const total=cartItems.reduce((s,i)=>s+i.lineTotal,0);
+  const status=(owe+total>10000)?'PENDING_APPROVAL':'CONFIRMED';
+  const orderId='ORD-'+uid6();
   try{
-    const ref=await db.collection('orders').add({customerId:cid,customerName:cname,salesmanId:S.uid,salesmanName:S.user.name,items,totalAmount:total,status,createdAt:ts()});
-    S.orders.unshift({id:ref.id,customerId:cid,customerName:cname,salesmanId:S.uid,items,totalAmount:total,status});
+    const ref=await db.collection('orders').add({
+      orderId, customerId:cid, customerName:cname,
+      salesmanId:S.uid, salesmanName:S.userName,
+      items:cartItems, totalAmount:total,
+      status, createdAt:ts(),
+    });
+    S.orders.unshift({id:ref.id,orderId,customerId:cid,customerName:cname,
+      salesmanId:S.uid,items:cartItems,totalAmount:total,status});
     csh();
-    toast(status==='PENDING_APPROVAL'?'Order placed — needs admin approval':'Order confirmed! ✓',status==='PENDING_APPROVAL'?'w':'s');
+    toast(status==='PENDING_APPROVAL'?'Order placed — needs admin approval (dues)':'Order confirmed! ✓',
+      status==='PENDING_APPROVAL'?'w':'s');
     S.orderFilter='ALL'; go('ords');
   } catch(e){ toast(e.message,'e'); }
 }
 async function appOrd(id){
   await db.collection('orders').doc(id).update({status:'CONFIRMED',updatedAt:ts()});
   const o=S.orders.find(x=>x.id===id); if(o) o.status='CONFIRMED';
-  toast('Order approved!','s'); go('aords');
+  toast('Order approved!','s'); render(S.navStack[S.navStack.length-1]);
 }
 async function rejOrd(id){
   await db.collection('orders').doc(id).update({status:'REJECTED',updatedAt:ts()});
   const o=S.orders.find(x=>x.id===id); if(o) o.status='REJECTED';
-  toast('Order rejected','e'); go('aords');
+  toast('Order rejected','e'); render(S.navStack[S.navStack.length-1]);
+}
+function editOrder(id){
+  const o=S.orders.find(x=>x.id===id);
+  if(!o) return;
+  osh(`<div class="sh-t">Edit Order #${(o.orderId||id.slice(-6)).toUpperCase()} <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Change Status</span>
+    <select class="inp fs" id="edit-ord-status">
+      ${['CONFIRMED','PENDING_APPROVAL','PACKED','READY','DELIVERED','REJECTED'].map(s=>
+        `<option value="${s}" ${o.status===s?'selected':''}>${s.replace(/_/g,' ')}</option>`
+      ).join('')}
+    </select>
+    <button class="btn bp bw" style="margin-top:12px" onclick="saveEditOrder('${id}')">Save Changes</button>`);
+}
+async function saveEditOrder(id){
+  const st=document.getElementById('edit-ord-status').value;
+  await db.collection('orders').doc(id).update({status:st,updatedAt:ts()});
+  const o=S.orders.find(x=>x.id===id); if(o) o.status=st;
+  csh(); toast('Order updated','s'); render(S.navStack[S.navStack.length-1]);
 }
 
-// PAYMENT (salesman)
-function pgPay(){
-  const custs=S.customers.filter(c=>c.isActive!==false&&(!c.assignedTo||c.assignedTo===S.uid));
-  S.selMode='Cash';
+/* ── INVOICES (salesman) ───────────────────────────── */
+function pgInv(){
+  const myInvs=S.invoices.filter(inv=>{
+    const ord=S.orders.find(o=>o.id===inv.orderId||o.orderId===inv.orderId);
+    return ord?ord.salesmanId===S.uid:false;
+  });
+  return renderInvPage(myInvs,'inv');
+}
+function renderInvPage(invs,pid){
+  const totalOwe=invs.filter(i=>i.status!=='paid').reduce((s,i)=>s+((i.amount||0)-(i.paidAmount||0)),0);
   const d=mkDiv('pg');
-  d.innerHTML=`<span class="lbl">Customer *</span>
-    <select class="inp fs" id="pcust">${custs.map(c=>`<option value="${c.id}">${c.name}${(c.dues||0)>0?' — Dues '+money(c.dues):''}</option>`).join('')}</select>
+  d.innerHTML=`
+    <div class="sg" style="margin-bottom:14px">
+      <div class="st" style="border-color:var(--red)">
+        <div class="sv" style="color:var(--red)">${money(totalOwe)}</div>
+        <div class="sl2">Total Outstanding</div>
+      </div>
+      <div class="st" style="border-color:var(--grn)">
+        <div class="sv" style="color:var(--grn)">${invs.filter(i=>i.status==='paid').length}</div>
+        <div class="sl2">Paid Invoices</div>
+      </div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Invoice</th><th>Customer</th><th>Amount</th>
+          <th>Outstanding</th><th>Due</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${invs.map(inv=>{
+            const owe=(inv.amount||0)-(inv.paidAmount||0);
+            return `<tr>
+              <td><b>${inv.invoiceId||inv.id.slice(-6).toUpperCase()}</b></td>
+              <td>${inv.customerName||''}</td>
+              <td>${money(inv.amount)}</td>
+              <td class="${oweClass(owe)}">${money(owe)}</td>
+              <td>${fmtDate(inv.dueDate)}</td>
+              <td>${badge(inv.status)}</td>
+              <td>
+                ${inv.status!=='paid'?`<button class="btn bp bsm" onclick="payAgainstInvoice('${inv.id}','${inv.customerId}')">Pay</button>`:''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  return d;
+}
+
+/* ── PAYMENT (salesman) ────────────────────────────── */
+function pgPay(){
+  S.selMode='Cash';
+  const unpaidInvs=S.invoices.filter(i=>i.status!=='paid'&&S.orders.some(o=>(o.id===i.orderId||o.orderId===i.orderId)&&o.salesmanId===S.uid));
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <span class="lbl">Invoice *</span>
+    <select class="inp fs" id="pay-inv">
+      <option value="">Select invoice...</option>
+      ${unpaidInvs.map(i=>`<option value="${i.id}">#${i.invoiceId||i.id.slice(-6).toUpperCase()} — ${i.customerName||''} — Due ${money((i.amount||0)-(i.paidAmount||0))}</option>`).join('')}
+    </select>
     <span class="lbl">Amount (₹) *</span>
     <input class="inp" id="pamt" type="number" placeholder="0.00" style="margin-bottom:0">
-    <span class="lbl">Payment mode *</span>
+    <span class="lbl">Payment Mode *</span>
     <div class="mr">
       <button class="mb on" onclick="sM('Cash',this)">💵 Cash</button>
       <button class="mb" onclick="sM('UPI',this)">📱 UPI</button>
       <button class="mb" onclick="sM('Bank',this)">🏦 Bank</button>
       <button class="mb" onclick="sM('Cheque',this)">📄 Cheque</button>
     </div>
-    <div id="rw" style="display:none"><span class="lbl">Reference / UTR no.</span><input class="inp" id="pref" placeholder="Transaction ID or cheque no." style="margin-bottom:0"></div>
-    <button class="btn bg2 bw" style="padding:15px;font-size:16px;margin-top:14px" onclick="recPay()">Record Payment</button>
+    <div id="rw" style="display:none">
+      <span class="lbl">Reference / UTR no.</span>
+      <input class="inp" id="pref" placeholder="Transaction ID or cheque no." style="margin-bottom:0">
+    </div>
+    <button class="btn bg2 btn-lg" style="margin-top:14px" onclick="recPay()">Record Payment</button>
     <div class="sc">Recent Collections</div>
-    ${S.payments.filter(p=>p.salesmanId===S.uid).slice(0,30).map(p=>`<div class="li">
-      <div class="lim">
-        <div class="lit">${p.customerName||''}</div>
-        <div class="lis">${p.mode} · ${p.createdAt?(p.createdAt.toDate?p.createdAt.toDate().toLocaleDateString('en-IN'):p.createdAt):''}${p.reference?' · '+p.reference:''}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:18px;font-weight:800;color:var(--grn)">${money(p.amount)}</div>
-        <span class="bge ${p.reconciled?'bgg':'bam'}">${p.reconciled?'Reconciled':'Pending'}</span>
-      </div>
-    </div>`).join('')}`;
+    ${S.payments.slice(0,30).map(p=>`
+      <div class="li">
+        <div class="lim">
+          <div class="lit">${p.customerName||''}</div>
+          <div class="lis">${p.mode} · ${fmtDate(p.createdAt)}${p.reference?' · '+p.reference:''}</div>
+          <div class="lis2">Invoice #${(p.invoiceId||'').slice(-6).toUpperCase()}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="amt-big amt-grn">${money(p.amount)}</div>
+          ${badge(p.status)}
+        </div>
+      </div>`).join('')}`;
   return d;
 }
 function sM(m,el){
@@ -649,193 +1115,770 @@ function sM(m,el){
 }
 async function recPay(){
   const amt=parseFloat(document.getElementById('pamt').value);
-  const cid=document.getElementById('pcust').value;
-  if(!amt||isNaN(amt)){toast('Enter a valid amount','e');return;}
-  const cust=S.customers.find(c=>c.id===cid);
+  const invId=document.getElementById('pay-inv').value;
+  if(!amt||isNaN(amt)){ toast('Enter valid amount','e'); return; }
+  if(!invId){ toast('Select an invoice','e'); return; }
+  const inv=S.invoices.find(i=>i.id===invId);
+  if(!inv){ toast('Invoice not found','e'); return; }
   const ref=(document.getElementById('pref')||{}).value||'';
+  const maxPay=(inv.amount||0)-(inv.paidAmount||0);
+  if(amt>maxPay){ toast('Amount exceeds outstanding: '+money(maxPay),'e'); return; }
   try{
-    const docRef=await db.collection('payments').add({customerId:cid,customerName:cust.name,salesmanId:S.uid,salesmanName:S.user.name,amount:amt,mode:S.selMode,reference:ref,reconciled:false,createdAt:ts()});
-    S.payments.unshift({id:docRef.id,customerId:cid,customerName:cust.name,salesmanId:S.uid,amount:amt,mode:S.selMode,reference:ref,reconciled:false});
-    toast(money(amt)+' recorded via '+S.selMode,'s'); go('pay');
+    const payRef=await db.collection('payments').add({
+      invoiceId:invId, invoiceRef:inv.invoiceId||invId.slice(-6).toUpperCase(),
+      customerId:inv.customerId, customerName:inv.customerName,
+      orderId:inv.orderId, amount:amt,
+      mode:S.selMode, reference:ref,
+      collectedBy:S.uid, collectedByName:S.userName,
+      status:'pending', createdAt:ts(),
+    });
+    S.payments.unshift({id:payRef.id,invoiceId:invId,customerName:inv.customerName,
+      amount:amt,mode:S.selMode,reference:ref,collectedBy:S.uid,status:'pending'});
+    toast(money(amt)+' recorded — pending admin approval','s');
+    go('pay');
+  } catch(e){ toast(e.message,'e'); }
+}
+function payAgainstInvoice(invId,custId){
+  const inv=S.invoices.find(i=>i.id===invId);
+  if(!inv) return;
+  const owe=(inv.amount||0)-(inv.paidAmount||0);
+  S.selMode='Cash';
+  osh(`<div class="sh-t">Pay Invoice #${inv.invoiceId||invId.slice(-6).toUpperCase()} <button class="sh-x" onclick="csh()">✕</button></div>
+    <div class="ab aab"><span>💰</span><div>Outstanding: <b>${money(owe)}</b></div></div>
+    <span class="lbl">Amount (₹) *</span>
+    <input class="inp" id="qi-amt" type="number" placeholder="${owe}" value="${owe}" style="margin-bottom:0">
+    <span class="lbl">Payment Mode</span>
+    <div class="mr">
+      <button class="mb on" onclick="sM2('Cash',this)">💵 Cash</button>
+      <button class="mb" onclick="sM2('UPI',this)">📱 UPI</button>
+      <button class="mb" onclick="sM2('Bank',this)">🏦 Bank</button>
+    </div>
+    <div id="rw2" style="display:none;margin-top:8px">
+      <input class="inp" id="qi-ref" placeholder="Reference / UTR" style="margin-bottom:0">
+    </div>
+    <button class="btn bg2 bw" style="margin-top:14px" onclick="submitQuickPay('${invId}')">Submit Payment</button>`);
+}
+function sM2(m,el){
+  S.selMode=m;
+  document.querySelectorAll('.mr .mb').forEach(b=>b.classList.remove('on')); el.classList.add('on');
+  const rw=document.getElementById('rw2'); if(rw) rw.style.display=m!=='Cash'?'block':'none';
+}
+async function submitQuickPay(invId){
+  const amt=parseFloat(document.getElementById('qi-amt').value);
+  const ref=(document.getElementById('qi-ref')||{}).value||'';
+  if(!amt||isNaN(amt)){ toast('Enter valid amount','e'); return; }
+  const inv=S.invoices.find(i=>i.id===invId);
+  if(!inv) return;
+  try{
+    await db.collection('payments').add({
+      invoiceId:invId, invoiceRef:inv.invoiceId||invId.slice(-6).toUpperCase(),
+      customerId:inv.customerId, customerName:inv.customerName,
+      orderId:inv.orderId, amount:amt,
+      mode:S.selMode, reference:ref,
+      collectedBy:S.uid, collectedByName:S.userName,
+      status:'pending', createdAt:ts(),
+    });
+    S.payments.unshift({id:Date.now().toString(),invoiceId:invId,
+      customerName:inv.customerName,amount:amt,mode:S.selMode,status:'pending'});
+    csh(); toast(money(amt)+' recorded — pending approval','s');
   } catch(e){ toast(e.message,'e'); }
 }
 
-// ══════════════ ADMIN ══════════════
+// Returns — salesman create
+function newReturn(cid){
+  const cust=S.customers.find(c=>c.id===cid);
+  if(!cust){ toast('Customer not found','e'); return; }
+  if(!S.items.length){ toast('No items in master','w'); return; }
+  S.cart={};
+  osh(`<div class="sh-t">Create Return: ${cust.name} <button class="sh-x" onclick="csh()">✕</button></div>
+    ${S.items.map(p=>`
+      <div class="li" style="align-items:center;padding:10px 12px">
+        <div class="lim">
+          <div class="lit">${p.name}</div>
+          <div class="lis">${money(p.price)} / unit</div>
+        </div>
+        <div class="qc">
+          <button class="qb" onclick="cQ('${p.id}',${p.price},0,-1)">−</button>
+          <span class="qv" id="q-${p.id}">0</span>
+          <button class="qb qbp" onclick="cQ('${p.id}',${p.price},0,1)">+</button>
+        </div>
+      </div>`).join('')}
+    <span class="lbl">Reason</span>
+    <input class="inp" id="ret-reason" placeholder="e.g. Damaged, Expiry, Wrong item" style="margin-bottom:0">
+    <button class="btn br2 bw" style="margin-top:14px" onclick="submitReturn('${cust.id}','${cust.name}')">Submit Return Request</button>`);
+}
+async function submitReturn(cid,cname){
+  const items=Object.entries(S.cart).filter(([,q])=>q>0).map(([id,q])=>{
+    const p=S.items.find(x=>x.id===id);
+    return{productId:id,name:p.name,qty:q,price:p.price};
+  });
+  if(!items.length){ toast('Select at least one item','e'); return; }
+  const reason=(document.getElementById('ret-reason')||{}).value||'';
+  const retId='RET-'+uid6();
+  try{
+    const ref=await db.collection('returns').add({
+      returnId:retId, customerId:cid, customerName:cname,
+      salesmanId:S.uid, salesmanName:S.userName,
+      items, reason, status:'pending_pickup', createdAt:ts(),
+    });
+    S.returns.unshift({id:ref.id,returnId:retId,customerId:cid,customerName:cname,
+      salesmanId:S.uid,items,reason,status:'pending_pickup'});
+    csh(); toast('Return request submitted','s');
+  } catch(e){ toast(e.message,'e'); }
+}
 
+/* ══════════════════════════════════════════════════════════════
+   ██████████  ADMIN PAGES  ██████████
+══════════════════════════════════════════════════════════════ */
+
+/* ── ADMIN DASHBOARD ───────────────────────────────── */
 function pgAdash(){
-  const revenue=S.orders.filter(o=>o.status!=='REJECTED').reduce((s,o)=>s+(o.totalAmount||o.total||0),0);
+  const revenue=S.orders.filter(o=>o.status!=='REJECTED').reduce((s,o)=>s+(o.totalAmount||0),0);
   const pending=S.orders.filter(o=>o.status==='PENDING_APPROVAL').length;
-  const collected=S.payments.reduce((s,p)=>s+(p.amount||0),0);
+  const pendingPay=S.payments.filter(p=>p.status==='pending').length;
+  const totalOwe=S.invoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+((i.amount||0)-(i.paidAmount||0)),0);
   const d=mkDiv('pg');
-  d.innerHTML=`<div class="pt">Admin Dashboard</div><div class="ps">Live overview</div>
+  d.innerHTML=`
+    <div class="pt">Admin Dashboard</div>
+    <div class="ps">Live overview of all salesmen</div>
     <div class="sg">
-      <div class="st" style="border-color:var(--ind)"><div class="sv" style="color:var(--ind)">${S.orders.length}</div><div class="sl2">Total orders</div></div>
+      <div class="st" style="border-color:var(--ind)"><div class="sv" style="color:var(--ind)">${S.orders.length}</div><div class="sl2">Total Orders</div></div>
       <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${money(revenue)}</div><div class="sl2">Revenue</div></div>
-      <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${pending}</div><div class="sl2">Need approval</div></div>
-      <div class="st" style="border-color:var(--pur)"><div class="sv" style="color:var(--pur)">${money(collected)}</div><div class="sl2">Collected</div></div>
+      <div class="st" style="border-color:var(--red)"><div class="sv" style="color:var(--red)">${money(totalOwe)}</div><div class="sl2">Outstanding</div></div>
+      <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${pending+pendingPay}</div><div class="sl2">Pending Actions</div></div>
     </div>
-    ${pending?`<div class="ab aab" style="cursor:pointer" onclick="go('aords')"><span style="font-size:22px">⚠️</span><div><b>${pending} order(s) need your approval</b><br><span style="font-size:12px">Tap to review →</span></div></div>`:''}
-    <div class="sc">Customers Overview</div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--grn)">${S.customers.filter(c=>c.isActive!==false).length}</div><div class="sl2">Active</div></div>
-      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--red)">${S.customers.filter(c=>c.isActive===false).length}</div><div class="sl2">Inactive</div></div>
-      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--amb)">${S.customers.filter(c=>(c.dues||0)>0).length}</div><div class="sl2">With Dues</div></div>
+    ${pending?`<div class="ab aab" style="cursor:pointer" onclick="go('aords')">
+      <span style="font-size:20px">⚠️</span>
+      <div><b>${pending} order(s) need approval</b><br><span style="font-size:11px">Tap to review →</span></div>
+    </div>`:''}
+    ${pendingPay?`<div class="ab aab" style="cursor:pointer" onclick="go('apay')">
+      <span style="font-size:20px">💰</span>
+      <div><b>${pendingPay} payment(s) need approval</b><br><span style="font-size:11px">Tap to review →</span></div>
+    </div>`:''}
+    <div class="sc">Salesmen — Filter by
+      <select class="inp inp-sm" style="width:auto;margin:0" onchange="S.adminSalesmanFilter=this.value;render('adash')">
+        <option value="">All Salesmen</option>
+        ${S.allUsers.filter(u=>u.role==='salesman').map(u=>`<option value="${u.id}" ${S.adminSalesmanFilter===u.id?'selected':''}>${u.name}</option>`).join('')}
+      </select>
     </div>
-    <div class="sc">Recent Visits</div>
-    ${S.visits.slice(0,5).map(v=>`<div class="li">
-      <div class="lim">
-        <div class="lit">${v.customerName||''}</div>
-        <div class="lis">${v.salesmanName||''} · ${v.createdAt?(v.createdAt.toDate?v.createdAt.toDate().toLocaleString('en-IN'):v.createdAt):''}</div>
-      </div>
-      <span class="bge ${v.valid?'bgg':'brd'}">${v.valid?'Valid ✓':'Rejected ✗'}</span>
-    </div>`).join('')}`;
+    ${S.allUsers.filter(u=>u.role==='salesman'&&(!S.adminSalesmanFilter||u.id===S.adminSalesmanFilter)).map(u=>{
+      const uOrds=S.orders.filter(o=>o.salesmanId===u.id);
+      const uColl=S.payments.filter(p=>p.collectedBy===u.id&&p.status==='approved').reduce((s,p)=>s+(p.amount||0),0);
+      const uVisits=S.visits.filter(v=>v.salesmanId===u.id&&isToday(v.createdAt));
+      return `<div class="li">
+        <div class="lim">
+          <div class="lit">${u.name}</div>
+          <div class="lis">${u.email||''}</div>
+          <div class="tag-row">
+            <span class="bge bgbl">${uVisits.length} visits today</span>
+            <span class="bge bgpu">${uOrds.filter(o=>isToday(o.createdAt)).length} orders today</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:800;color:var(--grn)">${money(uColl)}</div>
+          <div style="font-size:11px;color:var(--mu)">collected</div>
+        </div>
+      </div>`;
+    }).join('')}
+    <div class="sc">Customer Summary</div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:8px">
+      <div class="card" style="flex:1;min-width:100px;margin:0;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--grn)">${S.customers.filter(c=>c.isActive!==false).length}</div><div class="sl2">Active</div></div>
+      <div class="card" style="flex:1;min-width:100px;margin:0;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--red)">${S.customers.filter(c=>c.isActive===false).length}</div><div class="sl2">Inactive</div></div>
+      <div class="card" style="flex:1;min-width:100px;margin:0;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--amb)">${S.customers.filter(c=>getOutstanding(c.id)>0).length}</div><div class="sl2">Has Dues</div></div>
+    </div>`;
   return d;
 }
-function pgAords(){ S.orderFilter=S.orderFilter||'ALL'; return pgOrds(); }
 
+/* ── ADMIN: ALL ORDERS ─────────────────────────────── */
+function pgAords(){
+  S.orderFilter=S.orderFilter||'ALL';
+  return pgOrds();
+}
+
+/* ── ADMIN: ALL INVOICES ───────────────────────────── */
+function pgAinv(){
+  return renderInvPage(S.invoices,'ainv');
+}
+
+/* ── ADMIN: CUSTOMERS ──────────────────────────────── */
 function pgAcusts(){
+  const salesmen=S.allUsers.filter(u=>u.role==='salesman');
   const d=mkDiv('pg');
-  d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <span style="font-size:15px;font-weight:700;color:var(--sl)">${S.customers.length} customers</span>
-    <button class="btn bp bsm" onclick="addCsh()">+ Add</button>
-  </div>
-  <input class="si" placeholder="Search..." oninput="aSrch(this.value)">
-  <div class="pr">
-    <div class="pl on" onclick="aCF('all',this)">All</div>
-    <div class="pl" onclick="aCF('active',this)">Active</div>
-    <div class="pl" onclick="aCF('inactive',this)">Inactive</div>
-    <div class="pl" onclick="aCF('dues',this)">Has Dues</div>
-  </div>
-  <div class="tw"><table>
-    <thead><tr><th>Shop</th><th>Phone</th><th>Status</th><th>Dues</th></tr></thead>
-    <tbody id="act">${rAC(S.customers)}</tbody>
-  </table></div>`;
+  d.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+      <span style="font-size:14px;font-weight:700;color:var(--sl)">${S.customers.length} customers</span>
+      <button class="btn bp bsm" onclick="addCshAdmin()">+ Add Customer</button>
+    </div>
+    <input class="si" placeholder="Search..." oninput="aSrch(this.value)">
+    <div class="pr">
+      <div class="pl on" onclick="aCF('all',this)">All</div>
+      <div class="pl" onclick="aCF('active',this)">Active</div>
+      <div class="pl" onclick="aCF('inactive',this)">Inactive</div>
+      <div class="pl" onclick="aCF('dues',this)">Has Dues</div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Shop</th><th>Phone</th><th>Salesman</th>
+          <th>Outstanding</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="act">${rAC(S.customers,salesmen)}</tbody>
+      </table>
+    </div>`;
   return d;
 }
-function rAC(custs){
-  return custs.map(c=>`<tr>
-    <td><b>${c.name}</b><br><span style="font-size:11px;color:var(--mu)">${c.address||c.addr||''}</span></td>
-    <td>${c.phone||''}</td>
-    <td><span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span></td>
-    <td style="font-weight:700;color:${(c.dues||0)>10000?'var(--red)':(c.dues||0)>0?'var(--amb)':'var(--grn)'}">${money(c.dues||0)}</td>
-  </tr>`).join('');
+function rAC(custs,salesmen){
+  const sm=salesmen||S.allUsers.filter(u=>u.role==='salesman');
+  return custs.map(c=>{
+    const owe=getOutstanding(c.id);
+    const smName=c.assignedSalesmanName||(sm.find(s=>s.id===c.assignedSalesmanId)||{}).name||'—';
+    return `<tr>
+      <td><b>${c.name}</b><br><span style="font-size:11px;color:var(--mu)">${c.address||''}</span></td>
+      <td>${c.phone||''}</td>
+      <td>${smName}</td>
+      <td class="${oweClass(owe)}">${money(owe)}</td>
+      <td><span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span></td>
+      <td>
+        <button class="btn bgy bsm" onclick="assignCust('${c.id}')">Assign</button>
+        <button class="btn bgy bsm" onclick="toggleActive('${c.id}',${c.isActive!==false})">${c.isActive!==false?'Deactivate':'Activate'}</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 function aSrch(q){
-  document.getElementById('act').innerHTML=rAC(S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q)));
+  const f=S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q));
+  document.getElementById('act').innerHTML=rAC(f);
 }
 function aCF(f,el){
   document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
   let c=S.customers;
   if(f==='active') c=c.filter(x=>x.isActive!==false);
   else if(f==='inactive') c=c.filter(x=>x.isActive===false);
-  else if(f==='dues') c=c.filter(x=>(x.dues||0)>0);
+  else if(f==='dues') c=c.filter(x=>getOutstanding(x.id)>0);
   document.getElementById('act').innerHTML=rAC(c);
 }
-
-function pgAbeat(){
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
-  const d=mkDiv('pg');
-  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-    <div><div class="pt" style="margin:0">Weekly Beat Plan</div><div class="ps" style="margin:0">Auto-clustered by location</div></div>
-    <button class="btn bp bsm" onclick="genBeat()">↻ Generate</button>
-  </div>`;
-  days.forEach(day=>{
-    const ids=S.beat[day]||[];
-    const custs=ids.map(id=>S.customers.find(c=>c.id===id)).filter(Boolean);
-    html+=`<div class="bd"><div class="bdt">${day}<span style="color:var(--mu);font-weight:600;font-size:12px">${custs.length} visits</span></div>
-      ${custs.length?custs.map(c=>`<div class="bc">🏪 ${c.name}<span style="color:#94a3b8;font-size:10px;margin-left:auto">${(c.address||c.addr||'').split(',')[0]}</span></div>`).join('')
-      :`<div style="font-size:12px;color:#94a3b8;padding:4px 6px">Rest day</div>`}
-    </div>`;
-  });
-  d.innerHTML=html; return d;
+function addCshAdmin(){
+  const salesmen=S.allUsers.filter(u=>u.role==='salesman');
+  osh(`<div class="sh-t">Add Customer <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Shop Name *</span>
+    <input class="inp" id="nc-n" placeholder="e.g. Sharma Kirana" style="margin-bottom:0">
+    <span class="lbl">Phone *</span>
+    <input class="inp" id="nc-p" type="tel" placeholder="10-digit" style="margin-bottom:0">
+    <span class="lbl">Address *</span>
+    <input class="inp" id="nc-a" placeholder="Full shop address" style="margin-bottom:0">
+    <span class="lbl">Category</span>
+    <select class="inp fs" id="nc-cat"><option>FMCG</option><option>Beverages</option><option>Snacks</option><option>Dairy</option></select>
+    <span class="lbl">GSTN (optional)</span>
+    <input class="inp" id="nc-g" placeholder="27AAPFU..." style="margin-bottom:0">
+    <span class="lbl">Beat Day</span>
+    <select class="inp fs" id="nc-day"><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option></select>
+    <span class="lbl">Assign to Salesman</span>
+    <select class="inp fs" id="nc-sm">
+      <option value="">Unassigned</option>
+      ${salesmen.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}
+    </select>
+    <button class="btn bp bw" style="margin-top:12px" onclick="saveAdminCust()">Save Customer</button>`);
 }
-async function genBeat(){
-  const custs=S.customers.filter(c=>c.isActive!==false);
+async function saveAdminCust(){
+  const n=document.getElementById('nc-n').value.trim();
+  const p=document.getElementById('nc-p').value.trim();
+  const a=document.getElementById('nc-a').value.trim();
+  const cat=document.getElementById('nc-cat').value;
+  const g=document.getElementById('nc-g').value.trim();
+  const day=document.getElementById('nc-day').value;
+  const smId=document.getElementById('nc-sm').value;
+  const smName=smId?(S.allUsers.find(u=>u.id===smId)||{}).name||'':'';
+  if(!n||!p||!a){ toast('Fill required fields','e'); return; }
+  try{
+    const ref=await db.collection('customers').add({
+      name:n,phone:p,address:a,category:cat,gstn:g,beatDay:day,
+      assignedSalesmanId:smId,assignedSalesmanName:smName,
+      isActive:true,dues:0,createdAt:ts(),createdBy:S.uid,
+    });
+    S.customers.push({id:ref.id,name:n,phone:p,address:a,category:cat,gstn:g,
+      beatDay:day,assignedSalesmanId:smId,assignedSalesmanName:smName,isActive:true,dues:0});
+    csh(); toast('Customer added!','s'); go('acusts');
+  } catch(e){ toast(e.message,'e'); }
+}
+function assignCust(cid){
+  const salesmen=S.allUsers.filter(u=>u.role==='salesman');
+  const cust=S.customers.find(c=>c.id===cid);
+  if(!cust) return;
+  osh(`<div class="sh-t">Assign: ${cust.name} <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Assign to Salesman</span>
+    <select class="inp fs" id="asgn-sm">
+      <option value="">Unassigned</option>
+      ${salesmen.map(s=>`<option value="${s.id}" ${cust.assignedSalesmanId===s.id?'selected':''}>${s.name}</option>`).join('')}
+    </select>
+    <span class="lbl">Beat Day</span>
+    <select class="inp fs" id="asgn-day">
+      ${['Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<option ${cust.beatDay===d?'selected':''}>${d}</option>`).join('')}
+    </select>
+    <button class="btn bp bw" style="margin-top:12px" onclick="saveAssign('${cid}')">Save Assignment</button>`);
+}
+async function saveAssign(cid){
+  const smId=document.getElementById('asgn-sm').value;
+  const day=document.getElementById('asgn-day').value;
+  const smName=smId?(S.allUsers.find(u=>u.id===smId)||{}).name||'':'';
+  await db.collection('customers').doc(cid).update({assignedSalesmanId:smId,assignedSalesmanName:smName,beatDay:day,updatedAt:ts()});
+  const c=S.customers.find(x=>x.id===cid);
+  if(c){c.assignedSalesmanId=smId;c.assignedSalesmanName=smName;c.beatDay=day;}
+  csh(); toast('Customer assigned!','s'); render('acusts');
+}
+async function toggleActive(cid,isActive){
+  const newVal=!isActive;
+  await db.collection('customers').doc(cid).update({isActive:newVal,updatedAt:ts()});
+  const c=S.customers.find(x=>x.id===cid); if(c) c.isActive=newVal;
+  toast(newVal?'Customer activated':'Customer deactivated',newVal?'s':'w');
+  render('acusts');
+}
+
+/* ── ADMIN: PAYMENTS ───────────────────────────────── */
+function pgApay(){
+  const total=S.payments.filter(p=>p.status==='approved').reduce((s,p)=>s+(p.amount||0),0);
+  const pendingAmt=S.payments.filter(p=>p.status==='pending').reduce((s,p)=>s+(p.amount||0),0);
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div class="sg">
+      <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${money(total)}</div><div class="sl2">Approved</div></div>
+      <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${money(pendingAmt)}</div><div class="sl2">Pending Approval</div></div>
+    </div>
+    <div class="pr">
+      <div class="pl on" onclick="fltPay('all',this)">All</div>
+      <div class="pl" onclick="fltPay('pending',this)">Pending</div>
+      <div class="pl" onclick="fltPay('approved',this)">Approved</div>
+    </div>
+    <div id="pay-list">${rPayList(S.payments)}</div>`;
+  return d;
+}
+function rPayList(pays){
+  if(!pays.length) return `<div class="es"><div class="ei">💰</div><div class="et">No payments</div></div>`;
+  return pays.map(p=>`
+    <div class="li">
+      <div class="lim">
+        <div class="lit">${p.customerName||''}</div>
+        <div class="lis">${p.mode} · ${p.collectedByName||''} · ${fmtDate(p.createdAt)}</div>
+        <div class="lis2">Invoice: ${p.invoiceRef||p.invoiceId||''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="amt-big amt-grn">${money(p.amount)}</div>
+        ${badge(p.status)}
+        ${p.status==='pending'?`<div class="rbs" style="justify-content:flex-end;margin-top:5px">
+          <button class="btn bg2 bsm" onclick="approvePay('${p.id}')">✓</button>
+          <button class="btn br2 bsm" onclick="rejectPay('${p.id}')">✕</button>
+        </div>`:''}
+      </div>
+    </div>`).join('');
+}
+function fltPay(f,el){
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const filtered=f==='all'?S.payments:S.payments.filter(p=>p.status===f);
+  document.getElementById('pay-list').innerHTML=rPayList(filtered);
+}
+async function approvePay(pid){
+  const p=S.payments.find(x=>x.id===pid);
+  if(!p) return;
+  await db.collection('payments').doc(pid).update({status:'approved',approvedAt:ts(),approvedBy:S.uid});
+  // Update invoice paidAmount
+  const inv=S.invoices.find(i=>i.id===p.invoiceId);
+  if(inv){
+    const newPaid=(inv.paidAmount||0)+p.amount;
+    const newStatus=newPaid>=(inv.amount||0)?'paid':newPaid>0?'partial':'unpaid';
+    await db.collection('invoices').doc(p.invoiceId).update({paidAmount:newPaid,status:newStatus,updatedAt:ts()});
+    inv.paidAmount=newPaid; inv.status=newStatus;
+  }
+  p.status='approved'; toast('Payment approved!','s'); render('apay');
+}
+async function rejectPay(pid){
+  await db.collection('payments').doc(pid).update({status:'rejected',updatedAt:ts()});
+  const p=S.payments.find(x=>x.id===pid); if(p) p.status='rejected';
+  toast('Payment rejected','e'); render('apay');
+}
+
+/* ── ADMIN: VISITS ─────────────────────────────────── */
+function pgAvisits(){
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div class="pr">
+      <div class="pl on" onclick="fltV('all',this)">All</div>
+      <div class="pl" onclick="fltV('order_taken',this)">Order Taken</div>
+      <div class="pl" onclick="fltV('no_order',this)">No Order</div>
+    </div>
+    <div id="vl">${rVL(S.visits)}</div>`;
+  return d;
+}
+function rVL(visits){
+  if(!visits.length) return `<div class="es"><div class="ei">📍</div><div class="et">No visits found</div></div>`;
+  return visits.map(v=>`
+    <div class="li" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="lit">${v.customerName||''}</div>
+          <div class="lis">👤 ${v.salesmanName||''} · ${fmtDate(v.createdAt)}</div>
+          ${v.remarks?`<div class="lis2">💬 ${v.remarks}</div>`:''}
+        </div>
+        ${badge(v.status||'pending')}
+      </div>
+      <div class="rbs">
+        ${v.selfieUrl&&v.selfieUrl!=='selfie_captured'?`<a href="${v.selfieUrl}" target="_blank" class="btn bgy bsm">📸 Selfie</a>`:'<span class="bge bgr bsm">No selfie uploaded</span>'}
+        ${v.lat&&v.lng?`<a href="https://maps.google.com/?q=${v.lat},${v.lng}" target="_blank" class="btn bgy bsm">📍 Map</a>`:''}
+      </div>
+    </div>`).join('');
+}
+function fltV(f,el){
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const filtered=f==='all'?S.visits:S.visits.filter(v=>v.status===f);
+  document.getElementById('vl').innerHTML=rVL(filtered);
+}
+
+/* ── ADMIN: ITEM MASTER ────────────────────────────── */
+function pgAitems(){
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+      <span style="font-size:14px;font-weight:700;color:var(--sl)">${S.items.length} items</span>
+      <button class="btn bp bsm" onclick="addItemSh()">+ Add Item</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Tax%</th><th></th></tr></thead>
+        <tbody id="items-tbody">${rItemRows(S.items)}</tbody>
+      </table>
+    </div>`;
+  return d;
+}
+function rItemRows(items){
+  return items.map(p=>`<tr>
+    <td><b>${p.name}</b></td>
+    <td style="font-family:monospace">${p.sku||''}</td>
+    <td>${money(p.price)}</td>
+    <td>${p.tax||0}%</td>
+    <td>
+      <button class="btn bgy bsm" onclick="editItemSh('${p.id}')">✏️</button>
+      <button class="btn br2 bsm" onclick="delItem('${p.id}')">🗑</button>
+    </td>
+  </tr>`).join('');
+}
+function addItemSh(){
+  osh(`<div class="sh-t">Add Item <button class="sh-x" onclick="csh()">✕</button></div>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">Item Name *</span><input class="inp" id="it-n" placeholder="e.g. Biscuits 200g" style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">SKU *</span><input class="inp" id="it-s" placeholder="BISC200" style="margin-bottom:0"></div>
+    </div>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">Price (₹) *</span><input class="inp" id="it-p" type="number" placeholder="0" style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">Tax (%)</span><input class="inp" id="it-t" type="number" placeholder="0" style="margin-bottom:0"></div>
+    </div>
+    <button class="btn bp bw" style="margin-top:14px" onclick="saveItem(null)">Save Item</button>`);
+}
+function editItemSh(id){
+  const p=S.items.find(x=>x.id===id); if(!p) return;
+  osh(`<div class="sh-t">Edit Item <button class="sh-x" onclick="csh()">✕</button></div>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">Item Name *</span><input class="inp" id="it-n" value="${p.name}" style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">SKU</span><input class="inp" id="it-s" value="${p.sku||''}" style="margin-bottom:0"></div>
+    </div>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">Price (₹) *</span><input class="inp" id="it-p" type="number" value="${p.price}" style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">Tax (%)</span><input class="inp" id="it-t" type="number" value="${p.tax||0}" style="margin-bottom:0"></div>
+    </div>
+    <button class="btn bp bw" style="margin-top:14px" onclick="saveItem('${id}')">Update Item</button>`);
+}
+async function saveItem(id){
+  const n=document.getElementById('it-n').value.trim();
+  const s=document.getElementById('it-s').value.trim();
+  const p=parseFloat(document.getElementById('it-p').value)||0;
+  const t=parseFloat(document.getElementById('it-t').value)||0;
+  if(!n||!p){ toast('Name and price are required','e'); return; }
+  try{
+    if(id){
+      await db.collection('items').doc(id).update({name:n,sku:s,price:p,tax:t,updatedAt:ts()});
+      const item=S.items.find(x=>x.id===id); if(item){item.name=n;item.sku=s;item.price=p;item.tax=t;}
+      toast('Item updated','s');
+    } else {
+      const ref=await db.collection('items').add({name:n,sku:s,price:p,tax:t,createdAt:ts()});
+      S.items.push({id:ref.id,name:n,sku:s,price:p,tax:t});
+      toast('Item added!','s');
+    }
+    csh(); render('aitems');
+  } catch(e){ toast(e.message,'e'); }
+}
+async function delItem(id){
+  if(!confirm('Delete this item?')) return;
+  await db.collection('items').doc(id).delete();
+  S.items=S.items.filter(x=>x.id!==id);
+  toast('Item deleted','w'); render('aitems');
+}
+
+/* ── ADMIN: BEAT PLAN ──────────────────────────────── */
+function pgAbeat(){
+  const salesmen=S.allUsers.filter(u=>u.role==='salesman');
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const selSm=S.adminSalesmanFilter||( salesmen[0]?salesmen[0].id:'');
+  const smCusts=S.customers.filter(c=>c.assignedSalesmanId===selSm);
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="pt" style="margin:0">Beat Planning</div>
+        <div class="ps" style="margin:0">Manage weekly routes</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="inp inp-sm" style="width:auto;margin:0" onchange="S.adminSalesmanFilter=this.value;render('abeat')">
+          <option value="">Select Salesman</option>
+          ${salesmen.map(u=>`<option value="${u.id}" ${selSm===u.id?'selected':''}>${u.name}</option>`).join('')}
+        </select>
+        <button class="btn bp bsm" onclick="genBeat('${selSm}')">↻ Auto-Generate</button>
+      </div>
+    </div>
+    ${selSm?days.map(day=>{
+      const dayIds=(S.beatPlan[day]||[]);
+      const dayCusts=dayIds.map(id=>smCusts.find(c=>c.id===id)).filter(Boolean);
+      const unassigned=smCusts.filter(c=>c.beatDay===day&&!dayIds.includes(c.id));
+      return `<div class="bd2">
+        <div class="bdt">${day}
+          <div style="display:flex;gap:5px">
+            <span style="font-weight:600;color:var(--mu);font-size:11px">${dayCusts.length} shops</span>
+            <button class="btn bgy bsm" style="padding:3px 8px;font-size:10px" onclick="addToBeat('${selSm}','${day}')">+ Add</button>
+          </div>
+        </div>
+        ${dayCusts.map(c=>`<div class="bc">
+          <span>🏪</span><span style="flex:1">${c.name}</span>
+          <button onclick="removeFromBeat('${selSm}','${day}','${c.id}')" style="background:none;border:none;color:var(--red);font-size:12px;cursor:pointer">✕</button>
+        </div>`).join('')}
+        ${unassigned.length?`<div style="font-size:11px;color:var(--mu);padding:4px 6px">${unassigned.length} more with beatDay=${day} not yet in plan</div>`:''}
+        ${!dayCusts.length?`<div style="font-size:11px;color:#94a3b8;padding:4px 6px">No shops assigned to ${day}</div>`:''}
+      </div>`;
+    }).join('')
+    : `<div class="es"><div class="ei">👆</div><div class="et">Select a salesman to manage their beat plan</div></div>`}`;
+  return d;
+}
+async function genBeat(smId){
+  if(!smId){ toast('Select a salesman first','e'); return; }
+  const custs=S.customers.filter(c=>c.assignedSalesmanId===smId&&c.isActive!==false);
   const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
   const sorted=[...custs].sort((a,b)=>((a.lat||0)*1000+(a.lng||0))-((b.lat||0)*1000+(b.lng||0)));
   const plan={}; days.forEach(d=>plan[d]=[]);
   sorted.forEach((c,i)=>plan[days[i%6]].push(c.id));
   try{
-    const snap=await db.collection('beatPlans').limit(1).get();
-    if(!snap.empty) await db.collection('beatPlans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
-    else await db.collection('beatPlans').add({plan,createdAt:ts()});
-    S.beat=plan; toast('Beat plan generated!','s'); go('abeat');
+    const snap=await db.collection('beat_plans').where('salesmanId','==',smId).limit(1).get();
+    if(!snap.empty){
+      await db.collection('beat_plans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
+    } else {
+      await db.collection('beat_plans').add({salesmanId:smId,plan,createdAt:ts()});
+    }
+    S.beatPlan=plan; toast('Beat plan generated!','s'); render('abeat');
   } catch(e){ toast(e.message,'e'); }
 }
+function addToBeat(smId,day){
+  const current=S.beatPlan[day]||[];
+  const available=S.customers.filter(c=>c.assignedSalesmanId===smId&&!current.includes(c.id));
+  if(!available.length){ toast('All assigned customers already in this day','w'); return; }
+  osh(`<div class="sh-t">Add to ${day} Beat <button class="sh-x" onclick="csh()">✕</button></div>
+    ${available.map(c=>`<div class="li" onclick="csh();addCustToBeat('${smId}','${day}','${c.id}')" style="cursor:pointer">
+      <div class="lim"><div class="lit">${c.name}</div><div class="lis">${c.address||''}</div></div>
+    </div>`).join('')}`);
+}
+async function addCustToBeat(smId,day,cid){
+  const plan={...S.beatPlan};
+  if(!plan[day]) plan[day]=[];
+  if(!plan[day].includes(cid)) plan[day].push(cid);
+  const snap=await db.collection('beat_plans').where('salesmanId','==',smId).limit(1).get();
+  if(!snap.empty){
+    await db.collection('beat_plans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
+  } else {
+    await db.collection('beat_plans').add({salesmanId:smId,plan,createdAt:ts()});
+  }
+  S.beatPlan=plan; toast('Added to beat plan','s'); render('abeat');
+}
+async function removeFromBeat(smId,day,cid){
+  const plan={...S.beatPlan};
+  if(plan[day]) plan[day]=plan[day].filter(id=>id!==cid);
+  const snap=await db.collection('beat_plans').where('salesmanId','==',smId).limit(1).get();
+  if(!snap.empty) await db.collection('beat_plans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
+  S.beatPlan=plan; render('abeat');
+}
 
-function pgApay(){
-  const total=S.payments.reduce((s,p)=>s+(p.amount||0),0);
-  const unrec=S.payments.filter(p=>!p.reconciled).reduce((s,p)=>s+(p.amount||0),0);
+/* ── ADMIN: RETURNS ────────────────────────────────── */
+function pgArets(){
+  return renderReturnsPage(S.returns,'arets');
+}
+function renderReturnsPage(rets,pid){
   const d=mkDiv('pg');
-  d.innerHTML=`<div class="sg" style="margin-bottom:16px">
-    <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${money(total)}</div><div class="sl2">Total collected</div></div>
-    <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${money(unrec)}</div><div class="sl2">Unreconciled</div></div>
-  </div>
-  ${S.payments.map(p=>`<div class="li">
-    <div class="lim">
-      <div class="lit">${p.customerName||''}</div>
-      <div class="lis">${p.mode} · ${p.salesmanName||''}${p.reference?' · '+p.reference:''}</div>
-      <div class="lis2">${p.createdAt?(p.createdAt.toDate?p.createdAt.toDate().toLocaleDateString('en-IN'):p.createdAt):''}</div>
+  d.innerHTML=`
+    <div class="pr">
+      <div class="pl on" onclick="fltRet('all',this,'${pid}')">All</div>
+      <div class="pl" onclick="fltRet('pending_pickup',this,'${pid}')">Pending Pickup</div>
+      <div class="pl" onclick="fltRet('collected',this,'${pid}')">Collected</div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:18px;font-weight:800;color:var(--grn)">${money(p.amount)}</div>
-      <span class="bge ${p.reconciled?'bgg':'bam'}">${p.reconciled?'Done':'Pending'}</span>
-      ${!p.reconciled?`<br><button class="btn bg2 bsm" style="margin-top:5px" onclick="recn('${p.id}')">Reconcile</button>`:''}
-    </div>
-  </div>`).join('')}`;
+    <div id="rl">${rRL(rets)}</div>`;
   return d;
 }
-async function recn(id){
-  await db.collection('payments').doc(id).update({reconciled:true});
-  const p=S.payments.find(x=>x.id===id); if(p) p.reconciled=true;
-  toast('Reconciled ✓','s'); go('apay');
+function rRL(rets){
+  if(!rets.length) return `<div class="es"><div class="ei">↩️</div><div class="et">No returns</div></div>`;
+  const isWH=S.role==='warehouse';
+  return rets.map(r=>`
+    <div class="li" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${r.returnId||r.id.slice(-6)}</div>
+          <div class="lit">${r.customerName||''}</div>
+          <div class="lis">${r.salesmanName||''} · ${fmtDate(r.createdAt)}</div>
+          ${r.reason?`<div class="lis2">📝 ${r.reason}</div>`:''}
+        </div>
+        ${badge(r.status)}
+      </div>
+      <div style="font-size:12px;color:var(--mu);margin-top:6px">
+        ${(r.items||[]).map(i=>`<span style="background:var(--bg);padding:2px 7px;border-radius:5px;margin:2px;display:inline-block">${i.name} ×${i.qty}</span>`).join('')}
+      </div>
+      ${r.status==='pending_pickup'&&(isWH||S.role==='admin')?`<div class="rbs">
+        <button class="btn bg2 bsm" onclick="collectReturn('${r.id}')">✓ Mark Collected</button>
+      </div>`:''}
+    </div>`).join('');
+}
+function fltRet(f,el,pid){
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const filtered=f==='all'?S.returns:S.returns.filter(r=>r.status===f);
+  document.getElementById('rl').innerHTML=rRL(filtered);
+}
+async function collectReturn(rid){
+  await db.collection('returns').doc(rid).update({status:'collected',collectedAt:ts(),collectedBy:S.uid});
+  const r=S.returns.find(x=>x.id===rid); if(r) r.status='collected';
+  toast('Return collected','s'); render(S.navStack[S.navStack.length-1]);
 }
 
-// ══════════════ WAREHOUSE ══════════════
-
+/* ══════════════════════════════════════════════════════════════
+   ██████████  WAREHOUSE PAGES  ██████████
+══════════════════════════════════════════════════════════════ */
 const FLOW=['CONFIRMED','PACKED','READY','DELIVERED'];
+
 function pgWq(){
   const ords=S.orders.filter(o=>['CONFIRMED','PACKED','READY'].includes(o.status));
   const d=mkDiv('pg');
-  if(!ords.length){d.innerHTML=`<div class="es"><div class="ei">🎉</div><div class="et">Queue is clear!</div></div>`;return d;}
+  if(!ords.length){
+    d.innerHTML=`<div class="es"><div class="ei">🎉</div><div class="et">Queue is clear!</div></div>`;
+    return d;
+  }
   d.innerHTML=ords.map(o=>{
-    const idx=FLOW.indexOf(o.status); const next=FLOW[idx+1];
+    const idx=FLOW.indexOf(o.status);
+    const next=FLOW[idx+1];
     return `<div class="card">
-      <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${o.id.slice(-8).toUpperCase()}</div>
-      <div style="font-size:16px;font-weight:800;color:var(--sl);margin:2px 0">${o.customerName||''}</div>
-      <div style="font-size:13px;color:var(--mu)">${(o.items||[]).length} items · ${money(o.totalAmount||0)}</div>
+      <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${(o.orderId||o.id.slice(-8)).toUpperCase()}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--sl);margin:2px 0">${o.customerName||''}</div>
+      <div style="font-size:12px;color:var(--mu)">${(o.items||[]).length} items · ${money(o.totalAmount||0)} · ${fmtDate(o.createdAt)}</div>
       <div class="ws">${FLOW.slice(0,4).map((_,i)=>`<div class="wd ${i<idx?'done':i===idx?'curr':''}"></div>`).join('')}</div>
-      <div style="font-size:12px;color:var(--mu);margin-bottom:10px">${(o.items||[]).map(i=>`<span style="background:var(--bg);padding:3px 8px;border-radius:6px;margin:2px;display:inline-block"><b>${i.name}</b> ×${i.qty}</span>`).join('')}</div>
+      <div style="font-size:11px;color:var(--mu);margin-bottom:9px">
+        ${(o.items||[]).map(i=>`<span style="background:var(--bg);padding:2px 7px;border-radius:5px;margin:2px;display:inline-block"><b>${i.name}</b> ×${i.qty}</span>`).join('')}
+      </div>
       <div class="rbs">
         ${next&&next!=='DELIVERED'?`<button class="btn bp bsm" onclick="advOrd('${o.id}','${next}')">→ Mark ${next}</button>`:''}
-        ${o.status==='READY'?`<button class="btn bg2 bsm" onclick="delOrd('${o.id}')">📸 Upload POD & Deliver</button>`:''}
+        ${o.status==='PACKED'?`<button class="btn bpu bsm" onclick="createInvoice('${o.id}')">🧾 Create Invoice</button>`:''}
+        ${o.status==='READY'?`<button class="btn bg2 bsm" onclick="deliverOrd('${o.id}')">📸 Upload POD & Deliver</button>`:''}
       </div>
     </div>`;
-  }).join(''); return d;
-}
-function pgWd(){
-  const ords=S.orders.filter(o=>o.status==='DELIVERED');
-  const d=mkDiv('pg');
-  d.innerHTML=ords.length?ords.map(o=>`<div class="li">
-    <div class="lim">
-      <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${o.id.slice(-8).toUpperCase()}</div>
-      <div class="lit">${o.customerName||''}</div>
-      <div class="lis">${(o.items||[]).length} items · ${money(o.totalAmount||0)}</div>
-    </div>
-    <span class="bge bbl">Delivered</span>
-  </div>`).join(''):`<div class="es"><div class="ei">📋</div><div class="et">No deliveries yet</div></div>`;
+  }).join('');
   return d;
 }
 async function advOrd(id,next){
   await db.collection('orders').doc(id).update({status:next,updatedAt:ts()});
   const o=S.orders.find(x=>x.id===id); if(o) o.status=next;
-  toast('Marked as '+next,'s'); go('wq');
+  toast('Marked as '+next,'s'); render('wq');
 }
-async function delOrd(id){
-  await db.collection('orders').doc(id).update({status:'DELIVERED',pod:true,updatedAt:ts()});
+async function deliverOrd(id){
+  await db.collection('orders').doc(id).update({status:'DELIVERED',pod:true,deliveredAt:ts(),updatedAt:ts()});
   const o=S.orders.find(x=>x.id===id); if(o){o.status='DELIVERED';o.pod=true;}
-  toast('Order delivered!','s'); go('wd');
+  toast('Order delivered!','s'); render('wd');
 }
+
+/* Create Invoice when order is PACKED
+   Invoice schema: invoiceId, orderId, customerId, amount, paidAmount,
+   dueDate (14 days), status (unpaid/partial/paid), createdAt
+*/
+async function createInvoice(ordId){
+  const o=S.orders.find(x=>x.id===ordId);
+  if(!o){ toast('Order not found','e'); return; }
+  const exists=S.invoices.some(i=>i.orderId===ordId);
+  if(exists){ toast('Invoice already exists for this order','w'); return; }
+  const invId='INV-'+uid6();
+  const dueDate=new Date(); dueDate.setDate(dueDate.getDate()+14);
+  try{
+    const ref=await db.collection('invoices').add({
+      invoiceId:invId, orderId:ordId,
+      customerId:o.customerId, customerName:o.customerName,
+      salesmanId:o.salesmanId, salesmanName:o.salesmanName,
+      amount:o.totalAmount||0, paidAmount:0,
+      dueDate:firebase.firestore.Timestamp.fromDate(dueDate),
+      status:'unpaid', createdAt:ts(),
+    });
+    S.invoices.unshift({id:ref.id,invoiceId:invId,orderId:ordId,
+      customerId:o.customerId,customerName:o.customerName,
+      amount:o.totalAmount||0,paidAmount:0,status:'unpaid'});
+    toast('Invoice created: '+invId,'s');
+    render('wq');
+  } catch(e){ toast(e.message,'e'); }
+}
+
+function pgWinv(){
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div class="pr">
+      <div class="pl on" onclick="fltWInv('all',this)">All</div>
+      <div class="pl" onclick="fltWInv('unpaid',this)">Unpaid</div>
+      <div class="pl" onclick="fltWInv('partial',this)">Partial</div>
+      <div class="pl" onclick="fltWInv('paid',this)">Paid</div>
+    </div>
+    <div id="winv-list">${rWInv(S.invoices)}</div>`;
+  return d;
+}
+function rWInv(invs){
+  if(!invs.length) return `<div class="es"><div class="ei">🧾</div><div class="et">No invoices</div></div>`;
+  return invs.map(inv=>{
+    const owe=(inv.amount||0)-(inv.paidAmount||0);
+    return `<div class="li">
+      <div class="lim">
+        <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${inv.invoiceId||inv.id.slice(-6)}</div>
+        <div class="lit">${inv.customerName||''}</div>
+        <div class="lis">Order #${(inv.orderId||'').slice(-6).toUpperCase()} · Due ${fmtDate(inv.dueDate)}</div>
+        <div class="lis2">Paid: ${money(inv.paidAmount||0)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="amt-big">${money(inv.amount)}</div>
+        <div class="${oweClass(owe)}" style="font-size:12px">Owe: ${money(owe)}</div>
+        ${badge(inv.status)}
+      </div>
+    </div>`;
+  }).join('');
+}
+function fltWInv(f,el){
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const filtered=f==='all'?S.invoices:S.invoices.filter(i=>i.status===f);
+  document.getElementById('winv-list').innerHTML=rWInv(filtered);
+}
+
+function pgWd(){
+  const ords=S.orders.filter(o=>o.status==='DELIVERED');
+  const d=mkDiv('pg');
+  d.innerHTML=ords.length ? ords.map(o=>`
+    <div class="li">
+      <div class="lim">
+        <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${(o.orderId||o.id.slice(-8)).toUpperCase()}</div>
+        <div class="lit">${o.customerName||''}</div>
+        <div class="lis">${(o.items||[]).length} items · ${money(o.totalAmount||0)} · ${fmtDate(o.createdAt)}</div>
+        ${o.pod?`<span class="bge bgg">📸 POD Uploaded</span>`:''}
+      </div>
+      <span class="bge bgbl">Delivered</span>
+    </div>`).join('')
+  : `<div class="es"><div class="ei">📋</div><div class="et">No deliveries yet</div></div>`;
+  return d;
+}
+
+function pgWret(){
+  return renderReturnsPage(S.returns,'wret');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   END OF SCRIPT
+══════════════════════════════════════════════════════════════ */
 </script>
 </body>
 </html>
