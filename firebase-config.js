@@ -14,12 +14,17 @@
 // ════════════════════════════════════════════════════
 
 const firebaseConfig = {
-  apiKey:            "PASTE_YOUR_apiKey_HERE",
-  authDomain:        "PASTE_YOUR_authDomain_HERE",
-  projectId:         "PASTE_YOUR_projectId_HERE",
-  storageBucket:     "PASTE_YOUR_storageBucket_HERE",
-  messagingSenderId: "PASTE_YOUR_messagingSenderId_HERE",
-  appId:             "PASTE_YOUR_appId_HERE"
+  apiKey: "AIzaSyB33o0cqdTsXL1Zk4ZmJVH7Eubc69QAfYI",
+
+  authDomain: "esop-management-1cb6c.firebaseapp.com",
+
+  projectId: "esop-management-1cb6c",
+
+  storageBucket: "esop-management-1cb6c.firebasestorage.app",
+
+  messagingSenderId: "315310740347",
+
+  appId: "1:315310740347:web:f6973730c6d79405a2a3de"
 };
 
 // ════════════════════════════════════════════════════
