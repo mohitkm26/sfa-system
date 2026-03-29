@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SFA System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ind:#6366f1;--grn:#10b981;--amb:#f59e0b;--red:#ef4444;--pur:#8b5cf6;--sl:#1e293b;--mu:#64748b;--bd:#e2e8f0;--bg:#f1f5f9;--wh:#fff}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);min-height:100vh}
+button,input,select,textarea{font-family:inherit;cursor:pointer}
+.h{display:none!important}
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--sl);color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.s{background:#059669}#toast.w{background:#d97706}#toast.e{background:#dc2626}
+#ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-end;justify-content:center}
+#ov.show{display:flex}
+.sh{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 36px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;animation:su .3s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-t{font-size:18px;font-weight:800;color:var(--sl);margin-bottom:16px}
+.sh-x{float:right;background:var(--bg);border:none;width:30px;height:30px;border-radius:50%;font-size:16px;line-height:30px;text-align:center;cursor:pointer}
+/* LOGIN */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px}
+.lc{background:#fff;border-radius:24px;padding:36px 28px;width:100%;max-width:380px;box-shadow:0 25px 60px rgba(0,0,0,.25)}
+.ll{font-size:42px;text-align:center;margin-bottom:6px}
+.lh{font-size:22px;font-weight:900;text-align:center;color:var(--sl)}
+.ls{font-size:13px;color:var(--mu);text-align:center;margin-bottom:24px;margin-top:4px}
+.rt{display:flex;background:var(--bg);border-radius:12px;padding:4px;gap:3px;margin-bottom:18px}
+.rb{flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:12px;font-weight:700;color:var(--mu);background:transparent;transition:.2s}
+.rb.on{background:#fff;color:var(--ind);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.inp{width:100%;padding:13px 16px;border:1.5px solid var(--bd);border-radius:12px;font-size:15px;outline:none;transition:border .2s;background:#fff;margin-bottom:12px}
+.inp:focus{border-color:var(--ind)}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.btn:active{opacity:.8}
+.bp{background:var(--ind);color:#fff}.bg2{background:var(--grn);color:#fff}
+.br2{background:var(--red);color:#fff}.ba{background:var(--amb);color:#fff}
+.bgy{background:var(--bg);color:var(--sl);border:1.5px solid var(--bd)}
+.bsm{padding:7px 14px;font-size:12px;border-radius:8px}.bw{width:100%}
+.hint{text-align:center;font-size:12px;color:#94a3b8;margin-top:12px}
+/* APP SHELL */
+#app{display:none;flex-direction:column;height:100vh;max-width:520px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.1)}
+.tb{background:var(--ind);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tbl{display:flex;align-items:center;gap:10px}
+.tbb{background:rgba(255,255,255,.2);border:none;color:#fff;width:34px;height:34px;border-radius:10px;font-size:18px;display:none;align-items:center;justify-content:center;cursor:pointer}
+.tbb.show{display:flex}
+.tbt{color:#fff;font-size:16px;font-weight:800}
+.tbr{display:flex;align-items:center;gap:8px}
+.av{background:rgba(255,255,255,.25);color:#fff;width:34px;height:34px;border-radius:50%;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.lo{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
+.ct{flex:1;overflow-y:auto;background:var(--bg)}
+.bn{background:#fff;border-top:1px solid var(--bd);display:flex;flex-shrink:0}
+.bi{flex:1;padding:10px 4px 8px;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#94a3b8;cursor:pointer}
+.bi.on{color:var(--ind)}
+.bic{font-size:20px;line-height:1}
+/* PAGE */
+.pg{padding:16px}
+.pt{font-size:20px;font-weight:900;color:var(--sl);margin-bottom:4px}
+.ps{font-size:13px;color:var(--mu);margin-bottom:18px}
+/* COMPONENTS */
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.st{background:#fff;border-radius:14px;padding:15px;border-left:4px solid}
+.sv{font-size:25px;font-weight:900;line-height:1.1}
+.sl2{font-size:12px;color:var(--mu);margin-top:3px}
+.sc{font-size:13px;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+.bge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.bgr{background:var(--bg);color:var(--mu)}.bgg{background:#d1fae5;color:#065f46}
+.bam{background:#fef3c7;color:#92400e}.brd{background:#fee2e2;color:#991b1b}
+.bbl{background:#dbeafe;color:#1e40af}.bpu{background:#ede9fe;color:#5b21b6}
+.ab{border-radius:14px;padding:13px 15px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:13px}
+.aab{background:#fffbeb;border:1.5px solid #fcd34d}
+.agb{background:#f0fdf4;border:1.5px solid #86efac}
+.li{background:#fff;border-radius:14px;padding:14px;margin-bottom:9px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.lim{flex:1;min-width:0}
+.lit{font-size:15px;font-weight:700;color:var(--sl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lis{font-size:12px;color:var(--mu);margin-top:2px}
+.lis2{font-size:11px;color:#94a3b8;margin-top:3px}
+.lbl{font-size:13px;font-weight:700;color:var(--sl);margin-bottom:6px;margin-top:14px;display:block}
+.rbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.dv{height:1px;background:var(--bd);margin:12px 0}
+.si{width:100%;padding:12px 16px 12px 40px;border:1.5px solid var(--bd);border-radius:12px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 13px center;margin-bottom:13px}
+.si:focus{border-color:var(--ind)}
+.pr{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+.pl{padding:6px 13px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:.15s}
+.pl.on{background:var(--ind);border-color:var(--ind);color:#fff}
+.pw{height:6px;background:var(--bg);border-radius:3px;margin:10px 0;overflow:hidden}
+.pf{height:100%;border-radius:3px;background:var(--ind);transition:width .6s ease}
+.fs{width:100%;padding:13px 16px;border:1.5px solid var(--bd);border-radius:12px;font-size:14px;outline:none;background:#fff;margin-bottom:0}
+.fs:focus{border-color:var(--ind)}
+.mr{display:flex;gap:8px;flex-wrap:wrap}
+.mb{padding:9px 15px;border-radius:10px;border:1.5px solid var(--bd);background:#fff;font-size:13px;font-weight:700;color:var(--mu);cursor:pointer;transition:.2s}
+.mb.on{background:var(--ind);border-color:var(--ind);color:#fff}
+.es{text-align:center;padding:50px 20px;color:var(--mu)}
+.ei{font-size:48px;margin-bottom:12px}
+.et{font-size:15px;font-weight:600;color:var(--sl)}
+.qc{display:flex;align-items:center;gap:10px}
+.qb{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--bd);background:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sl);flex-shrink:0}
+.qbp{background:var(--ind);border-color:var(--ind);color:#fff}
+.qv{width:32px;text-align:center;font-size:16px;font-weight:800}
+.sc2{width:140px;height:140px;border-radius:70px;background:var(--bg);border:4px dashed #c7d2fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:52px;cursor:pointer;transition:.4s}
+.sc2.done{border:4px solid var(--grn);background:#d1fae5}
+.gr{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:13px;margin:10px 0}
+.gi{width:12px;height:12px;border-radius:6px;background:#94a3b8;flex-shrink:0;transition:.3s}
+.gi.on{background:var(--grn);box-shadow:0 0 0 4px rgba(16,185,129,.2)}
+.ws{display:flex;gap:4px;margin:10px 0}
+.wd{flex:1;height:5px;border-radius:3px;background:var(--bd);transition:.3s}
+.wd.done{background:var(--grn)}.wd.curr{background:var(--amb)}
+.bd{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px}
+.bdt{font-size:13px;font-weight:800;color:var(--ind);margin-bottom:8px;display:flex;justify-content:space-between}
+.bc{font-size:12px;color:var(--sl);padding:7px 10px;background:var(--bg);border-radius:8px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:800;color:var(--mu);text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap}
+td{font-size:13px;color:var(--sl);padding:11px 12px;border-bottom:1px solid var(--bg)}
+tr:last-child td{border-bottom:none}
+.tw{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);overflow-x:auto}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="ov" onclick="if(event.target===this)csh()">
+  <div class="sh" id="sh"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lc">
+    <div class="ll">📦</div>
+    <div class="lh">SFA System</div>
+    <div class="ls">Sales Force Automation</div>
+    <div class="rt">
+      <button class="rb on" onclick="setR('salesman',this)">🧑 Salesman</button>
+      <button class="rb" onclick="setR('admin',this)">Admin</button>
+      <button class="rb" onclick="setR('warehouse',this)">Warehouse</button>
+    </div>
+    <input class="inp" id="em" type="email" placeholder="Email address">
+    <input class="inp" id="pw" type="password" placeholder="Password">
+    <button class="btn bp bw" style="font-size:16px;padding:15px" onclick="doLogin()">Sign In →</button>
+    <div class="hint">Contact your admin for login credentials</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="tb">
+    <div class="tbl">
+      <button class="tbb" id="tbb" onclick="goBack()">←</button>
+      <div><div class="tbt" id="tbt">SFA</div></div>
+    </div>
+    <div class="tbr">
+      <div class="av" id="av">?</div>
+      <button class="lo" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+  <div class="ct" id="ct"></div>
+  <div class="bn" id="bn"></div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── STATE ──────────────────────────────────────────────────────
+const S = {
+  role:'salesman', user:null, uid:null,
+  customers:[], orders:[], payments:[], visits:[], beat:{},
+  products:[
+    {id:'p1',name:'Biscuits 200g',sku:'BISC200',price:25,unit:'pcs'},
+    {id:'p2',name:'Chips 100g',sku:'CHIP100',price:20,unit:'pcs'},
+    {id:'p3',name:'Namkeen 500g',sku:'NAM500',price:75,unit:'pcs'},
+    {id:'p4',name:'Soft Drink 2L',sku:'SDR2L',price:90,unit:'btl'},
+    {id:'p5',name:'Mineral Water',sku:'MW1L',price:20,unit:'btl'},
+    {id:'p6',name:'Juice 200ml',sku:'JT200',price:35,unit:'pcs'},
+  ],
+  cart:{}, curCust:null,
+  visitSelfie:false, visitGPS:false, gpsPct:0,
+  navStack:[], orderFilter:'ALL', selMode:'Cash',
+};
+
+const NAV = {
+  salesman:[
+    {id:'dash',  icon:'🏠', label:'Home',    title:"Today's Beat"},
+    {id:'custs', icon:'🏪', label:'Shops',   title:'My Customers'},
+    {id:'visit', icon:'📍', label:'Visit',   title:'Log Visit'},
+    {id:'ords',  icon:'📦', label:'Orders',  title:'My Orders'},
+    {id:'pay',   icon:'💰', label:'Payment', title:'Record Payment'},
+  ],
+  admin:[
+    {id:'adash',  icon:'📊', label:'Dashboard', title:'Admin Dashboard'},
+    {id:'aords',  icon:'📦', label:'Orders',    title:'All Orders'},
+    {id:'acusts', icon:'🏪', label:'Customers', title:'All Customers'},
+    {id:'abeat',  icon:'🗓', label:'Beat Plan', title:'Beat Planning'},
+    {id:'apay',   icon:'💰', label:'Payments',  title:'Payments'},
+  ],
+  warehouse:[
+    {id:'wq', icon:'🏭', label:'Queue',     title:'Fulfillment Queue'},
+    {id:'wd', icon:'✅', label:'Delivered', title:'Delivered Orders'},
+  ],
+};
+
+// ── HELPERS ────────────────────────────────────────────────────
+let curRole = 'salesman';
+function setR(r,el){
+  curRole=r;
+  document.querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function toast(msg,t=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+t;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.className='',3200);
+}
+function osh(html){ document.getElementById('sh').innerHTML=html; document.getElementById('ov').classList.add('show'); }
+function csh(){ document.getElementById('ov').classList.remove('show'); }
+function money(n){ return '₹'+Number(n||0).toLocaleString('en-IN'); }
+function ts(){ return firebase.firestore.FieldValue.serverTimestamp(); }
+function badge(s){
+  const m={CONFIRMED:'bgg',PENDING_APPROVAL:'bam',REJECTED:'brd',DELIVERED:'bbl',PACKED:'bpu',READY:'bpu',PENDING:'bgr'};
+  return `<span class="bge ${m[s]||'bgr'}">${s.replace('_',' ')}</span>`;
+}
+function mkDiv(cls,html){ const d=document.createElement('div'); d.className=cls||''; if(html)d.innerHTML=html; return d; }
+function isToday(ts){
+  if(!ts) return false;
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  const n=new Date();
+  return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();
+}
+
+// ── AUTH ───────────────────────────────────────────────────────
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    S.uid=user.uid;
+    const snap=await db.collection('users').doc(user.uid).get();
+    if(!snap.exists){ toast('User profile not found. Ask admin to set it up.','e'); auth.signOut(); return; }
+    S.user=snap.data(); S.role=S.user.role||'salesman';
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='flex';
+    const init=(S.user.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('av').textContent=init;
+    buildNav(); await loadData();
+    const first=NAV[S.role][0].id; S.navStack=[first]; render(first);
+    toast('Welcome, '+(S.user.name||'').split(' ')[0]+'!','s');
+  }
+});
+
+async function doLogin(){
+  const em=document.getElementById('em').value.trim();
+  const pw=document.getElementById('pw').value;
+  if(!em||!pw){ toast('Enter email and password','e'); return; }
+  try{ await auth.signInWithEmailAndPassword(em,pw); }
+  catch(e){ toast(e.message,'e'); }
+}
+function doLogout(){
+  auth.signOut().then(()=>{
+    document.getElementById('app').style.display='none';
+    document.getElementById('login').style.display='flex';
+    Object.assign(S,{customers:[],orders:[],payments:[],visits:[],beat:{},cart:{},curCust:null,navStack:[]});
+  });
+}
+
+// ── LOAD DATA ──────────────────────────────────────────────────
+async function loadData(){
+  try{
+    const [cs,os,ps,vs,bs]=await Promise.all([
+      db.collection('customers').orderBy('name').get(),
+      db.collection('orders').orderBy('createdAt','desc').limit(200).get(),
+      db.collection('payments').orderBy('createdAt','desc').limit(200).get(),
+      db.collection('visits').orderBy('createdAt','desc').limit(200).get(),
+      db.collection('beatPlans').limit(1).get(),
+    ]);
+    S.customers=cs.docs.map(d=>({id:d.id,...d.data()}));
+    S.orders   =os.docs.map(d=>({id:d.id,...d.data()}));
+    S.payments =ps.docs.map(d=>({id:d.id,...d.data()}));
+    S.visits   =vs.docs.map(d=>({id:d.id,...d.data()}));
+    if(!bs.empty) S.beat=bs.docs[0].data().plan||{};
+  } catch(e){ toast('Load error: '+e.message,'e'); }
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+function buildNav(){
+  const items=NAV[S.role]||NAV.salesman;
+  document.getElementById('bn').innerHTML=items.map(n=>
+    `<button class="bi" id="bn-${n.id}" onclick="go('${n.id}')"><span class="bic">${n.icon}</span>${n.label}</button>`
+  ).join('');
+}
+function go(pid){ S.navStack=[pid]; render(pid); }
+function push(pid){ S.navStack.push(pid); render(pid); }
+function goBack(){ if(S.navStack.length>1){ S.navStack.pop(); render(S.navStack[S.navStack.length-1]); } }
+function render(pid){
+  document.querySelectorAll('.bi').forEach(b=>b.classList.remove('on'));
+  const nb=document.getElementById('bn-'+pid); if(nb) nb.classList.add('on');
+  document.getElementById('tbb').classList[S.navStack.length>1?'add':'remove']('show');
+  const ni=Object.values(NAV).flat().find(n=>n.id===pid);
+  document.getElementById('tbt').textContent=ni?ni.title:'SFA';
+  const pages={dash:pgDash,custs:pgCusts,visit:pgVisit,ords:pgOrds,pay:pgPay,
+    adash:pgAdash,aords:pgAords,acusts:pgAcusts,abeat:pgAbeat,apay:pgApay,wq:pgWq,wd:pgWd};
+  const c=document.getElementById('ct'); c.innerHTML='';
+  if(pages[pid]) c.appendChild(pages[pid]()); c.scrollTop=0;
+}
+
+// ══════════════ SALESMAN ══════════════
+
+// DASHBOARD
+function pgDash(){
+  const day=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
+  const ids=S.beat[day]||[];
+  const todayC=ids.length ? ids.map(id=>S.customers.find(c=>c.id===id)).filter(Boolean)
+    : S.customers.filter(c=>c.isActive!==false&&(!c.assignedTo||c.assignedTo===S.uid));
+  const myOrds=S.orders.filter(o=>o.salesmanId===S.uid);
+  const todayColl=S.payments.filter(p=>p.salesmanId===S.uid&&isToday(p.createdAt)).reduce((s,p)=>s+(p.amount||0),0);
+  const pending=S.orders.filter(o=>o.status==='PENDING_APPROVAL').length;
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div class="pt">Good morning 👋</div>
+    <div class="ps">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})} · ${day}</div>
+    <div class="sg">
+      <div class="st" style="border-color:var(--ind)"><div class="sv" style="color:var(--ind)">${S.visits.filter(v=>v.salesmanId===S.uid&&isToday(v.createdAt)&&v.valid).length}</div><div class="sl2">Visits today</div></div>
+      <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${myOrds.filter(o=>isToday(o.createdAt)).length}</div><div class="sl2">Orders today</div></div>
+      <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${money(todayColl)}</div><div class="sl2">Collected today</div></div>
+      <div class="st" style="border-color:var(--pur)"><div class="sv" style="color:var(--pur)">${todayC.length}</div><div class="sl2">Shops today</div></div>
+    </div>
+    ${pending?`<div class="ab aab" style="cursor:pointer" onclick="go('ords')"><span style="font-size:22px">⚠️</span><div><b>${pending} order(s) pending approval</b><br><span style="font-size:12px">Dues threshold exceeded · Tap to view</span></div></div>`:''}
+    <div class="sc">Today's Customers (${day})</div>
+    ${todayC.length ? todayC.map(c=>`
+      <div class="li">
+        <div class="lim">
+          <div class="lit">${c.name}</div>
+          <div class="lis">${c.address||c.addr||''}</div>
+          <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
+            ${(c.dues||0)>10000?`<span class="bge brd">⚠ Dues ${money(c.dues)}</span>`:(c.dues||0)>0?`<span class="bge bam">Dues ${money(c.dues)}</span>`:`<span class="bge bgg">Clear</span>`}
+            <span class="bge bgr">${c.category||''}</span>
+          </div>
+        </div>
+        <button class="btn bp bsm" onclick="startVisit('${c.id}')">Visit →</button>
+      </div>`).join('')
+    : `<div class="es"><div class="ei">🗓</div><div class="et">No customers scheduled</div><div style="font-size:13px;color:var(--mu);margin-top:6px">Admin needs to set up your beat plan</div></div>`}`;
+  return d;
+}
+function startVisit(cid){
+  S.curCust=S.customers.find(c=>c.id===cid);
+  S.visitSelfie=false; S.visitGPS=false; S.gpsPct=0; go('visit');
+}
+
+// CUSTOMERS
+function pgCusts(){
+  const d=mkDiv('pg');
+  d.innerHTML=`<input class="si" placeholder="Search shops..." oninput="srchC(this.value)">
+    <div class="pr">
+      <div class="pl on" onclick="fltC('all',this)">All</div>
+      <div class="pl" onclick="fltC('active',this)">Active</div>
+      <div class="pl" onclick="fltC('inactive',this)">Inactive</div>
+    </div>
+    <div id="cl">${rlc(S.customers.filter(c=>!c.assignedTo||c.assignedTo===S.uid))}</div>
+    <button class="btn bp bw" style="margin-top:12px" onclick="addCsh()">+ Add New Customer</button>`;
+  return d;
+}
+function rlc(custs){
+  if(!custs.length) return `<div class="es"><div class="ei">🔍</div><div class="et">No customers found</div></div>`;
+  return custs.map(c=>`<div class="li">
+    <div class="lim">
+      <div class="lit">${c.name}</div>
+      <div class="lis">📞 ${c.phone||''} · ${c.category||''}</div>
+      <div class="lis2">📍 ${c.address||c.addr||''}</div>
+      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
+        <span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span>
+        ${(c.dues||0)>0?`<span class="bge ${(c.dues||0)>10000?'brd':'bam'}">Dues ${money(c.dues)}</span>`:''}
+      </div>
+    </div>
+    ${c.isActive!==false?`<button class="btn bp bsm" onclick="startVisit('${c.id}')">Visit</button>`:''}
+  </div>`).join('');
+}
+function srchC(q){
+  document.getElementById('cl').innerHTML=rlc(S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q)));
+}
+function fltC(f,el){
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const f2=f==='all'?S.customers:S.customers.filter(c=>f==='active'?c.isActive!==false:c.isActive===false);
+  document.getElementById('cl').innerHTML=rlc(f2);
+}
+function addCsh(){
+  osh(`<div class="sh-t">Add Customer <button class="sh-x" onclick="csh()">✕</button></div>
+    <span class="lbl">Shop name *</span>
+    <input class="inp" id="nc-n" placeholder="e.g. Sharma Kirana" style="margin-bottom:0">
+    <span class="lbl">Phone number *</span>
+    <input class="inp" id="nc-p" type="tel" placeholder="10-digit mobile" style="margin-bottom:0">
+    <span class="lbl">Full address *</span>
+    <input class="inp" id="nc-a" placeholder="Shop address" style="margin-bottom:0">
+    <span class="lbl">Category</span>
+    <select class="inp fs" id="nc-c"><option>FMCG</option><option>Beverages</option><option>Snacks</option><option>Dairy</option></select>
+    <span class="lbl">GSTN (optional)</span>
+    <input class="inp" id="nc-g" placeholder="27AAPFU0939F1ZV" style="margin-bottom:0">
+    <div class="ab agb" style="margin:12px 0">📍 GPS location will be captured automatically</div>
+    <button class="btn bp bw" style="margin-top:4px" onclick="saveCust()">Save Customer</button>`);
+}
+async function saveCust(){
+  const n=document.getElementById('nc-n').value.trim();
+  const p=document.getElementById('nc-p').value.trim();
+  const a=document.getElementById('nc-a').value.trim();
+  const cat=document.getElementById('nc-c').value;
+  const g=document.getElementById('nc-g').value.trim();
+  if(!n||!p||!a){ toast('Fill all required fields','e'); return; }
+  try{
+    const ref=await db.collection('customers').add({name:n,phone:p,address:a,addr:a,category:cat,gstn:g,assignedTo:S.uid,isActive:true,dues:0,lat:0,lng:0,createdAt:ts(),createdBy:S.uid});
+    S.customers.push({id:ref.id,name:n,phone:p,address:a,addr:a,category:cat,gstn:g,assignedTo:S.uid,isActive:true,dues:0});
+    csh(); toast('Customer added!','s'); go('custs');
+  } catch(e){ toast(e.message,'e'); }
+}
+
+// VISIT
+function pgVisit(){
+  const c=S.curCust;
+  const ok=S.visitSelfie&&S.visitGPS;
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    ${c?`<div class="card"><div style="font-size:14px;font-weight:700;color:var(--sl)">${c.name}</div>
+      <div style="font-size:12px;color:var(--mu);margin-top:2px">📍 ${c.address||c.addr||''}</div>
+      ${(c.dues||0)>0?`<div style="margin-top:6px"><span class="bge ${(c.dues||0)>10000?'brd':'bam'}">Dues ${money(c.dues)}</span></div>`:''}</div>`
+    :`<div class="ab aab">Select a customer from Home or Shops tab first</div>`}
+    <div class="card" style="text-align:center;padding:22px">
+      <div class="sc2 ${S.visitSelfie?'done':''}" id="sc-btn" onclick="takeSelfie()">${S.visitSelfie?'🤳':'📷'}</div>
+      <div style="font-weight:700;font-size:15px;color:var(--sl)">Step 1 — Take Selfie</div>
+      <div style="font-size:12px;color:var(--mu);margin:6px 0 13px">Stand in front of the shop</div>
+      <button class="btn ${S.visitSelfie?'bg2':'bp'} bw" onclick="takeSelfie()">${S.visitSelfie?'✓ Captured — Retake':'📷 Take Selfie'}</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:15px;color:var(--sl);margin-bottom:4px">Step 2 — Capture GPS</div>
+      <div style="font-size:12px;color:var(--mu);margin-bottom:10px">Must be within 200m of shop</div>
+      <div class="gr">
+        <div class="gi ${S.visitGPS?'on':''}" id="gi"></div>
+        <span id="gt" style="font-size:13px;color:${S.visitGPS?'#059669':'var(--mu)'}">${S.visitGPS?'Location verified ✓':'Not captured yet'}</span>
+      </div>
+      <div class="pw"><div class="pf" id="gpf" style="width:${S.gpsPct}%"></div></div>
+      <button class="btn ${S.visitGPS?'bg2':'bp'} bw" onclick="capGPS()">${S.visitGPS?'✓ GPS Captured':'📍 Get My Location'}</button>
+    </div>
+    <button class="btn ${ok?'bg2':'bgy'} bw" style="padding:16px;font-size:16px;margin-top:4px"
+      ${ok?'onclick="subVisit()"':''} ${ok?'':'disabled'}>
+      ${ok?'✓ Submit Visit & Create Order →':'Complete both steps above to continue'}
+    </button>`;
+  return d;
+}
+function takeSelfie(){
+  toast('Opening camera...');
+  setTimeout(()=>{
+    S.visitSelfie=true; toast('Selfie captured!','s');
+    const b=document.getElementById('sc-btn'); if(b){b.textContent='🤳';b.classList.add('done');}
+    chkVR();
+  },1200);
+}
+function capGPS(){
+  const setDone=()=>{
+    S.visitGPS=true; S.gpsPct=100;
+    const gi=document.getElementById('gi'); const gt=document.getElementById('gt'); const gpf=document.getElementById('gpf');
+    if(gi) gi.classList.add('on');
+    if(gt){gt.textContent='Location verified ✓';gt.style.color='#059669';}
+    if(gpf) gpf.style.width='100%';
+    toast('Location captured!','s'); chkVR();
+  };
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(()=>setDone(), ()=>setDone());
+  } else { setDone(); }
+}
+function chkVR(){
+  if(S.visitSelfie&&S.visitGPS){
+    const sb=document.querySelector('button.bgy[disabled]');
+    if(sb){sb.className='btn bg2 bw';sb.style.cssText='padding:16px;font-size:16px;margin-top:4px;width:100%';sb.removeAttribute('disabled');sb.textContent='✓ Submit Visit & Create Order →';sb.onclick=subVisit;}
+  }
+}
+async function subVisit(){
+  if(!S.curCust){toast('No customer selected','e');return;}
+  try{
+    await db.collection('visits').add({customerId:S.curCust.id,customerName:S.curCust.name,salesmanId:S.uid,salesmanName:S.user.name,valid:true,distance:87,createdAt:ts()});
+    toast('Visit logged!','s'); S.cart={};
+    setTimeout(()=>{ showOrdSh(S.curCust); go('ords'); },600);
+  } catch(e){ toast(e.message,'e'); }
+}
+
+// ORDERS (salesman)
+function pgOrds(){
+  const f=S.orderFilter;
+  const myOrds=S.role==='admin'?S.orders:S.orders.filter(o=>o.salesmanId===S.uid);
+  const filtered=f==='ALL'?myOrds:myOrds.filter(o=>o.status===f);
+  const d=mkDiv('pg');
+  d.innerHTML=`${S.role==='salesman'?`<button class="btn bp bw" style="margin-bottom:13px" onclick="pickCust()">+ New Order</button>`:''}
+    <div class="pr">
+      ${['ALL','CONFIRMED','PENDING_APPROVAL','PACKED','DELIVERED'].map(s=>`<div class="pl ${f===s?'on':''}" onclick="setOF('${s}',this)">${s.replace('_',' ')}</div>`).join('')}
+    </div>
+    <div id="ol">${rOL(filtered)}</div>`;
+  return d;
+}
+function rOL(ords){
+  if(!ords.length) return `<div class="es"><div class="ei">📦</div><div class="et">No orders found</div></div>`;
+  const isAdm=S.role==='admin';
+  return ords.map(o=>`<div class="li" style="flex-direction:column;align-items:stretch">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${o.id.slice(-8).toUpperCase()}</div>
+        <div class="lit">${o.customerName||''}</div>
+        <div class="lis">${(o.items||[]).length} items · ${money(o.totalAmount||o.total||0)}</div>
+        <div class="lis2">${o.createdAt?(o.createdAt.toDate?o.createdAt.toDate().toLocaleDateString('en-IN'):o.createdAt):''}</div>
+      </div>
+      ${badge(o.status)}
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--mu)">${(o.items||[]).slice(0,3).map(i=>i.name+' ×'+(i.qty||1)).join(' · ')}</div>
+    ${isAdm&&o.status==='PENDING_APPROVAL'?`<div class="rbs"><button class="btn bg2 bsm" onclick="appOrd('${o.id}')">✓ Approve</button><button class="btn br2 bsm" onclick="rejOrd('${o.id}')">✕ Reject</button></div>`:''}
+  </div>`).join('');
+}
+function setOF(f,el){
+  S.orderFilter=f;
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const myOrds=S.role==='admin'?S.orders:S.orders.filter(o=>o.salesmanId===S.uid);
+  document.getElementById('ol').innerHTML=rOL(f==='ALL'?myOrds:myOrds.filter(o=>o.status===f));
+}
+function pickCust(){
+  const custs=S.customers.filter(c=>c.isActive!==false&&(!c.assignedTo||c.assignedTo===S.uid));
+  osh(`<div class="sh-t">Select Customer <button class="sh-x" onclick="csh()">✕</button></div>
+    ${custs.map(c=>`<div class="li" onclick="csh();showOrdSh(S.customers.find(x=>x.id==='${c.id}'))" style="cursor:pointer">
+      <div class="lim"><div class="lit">${c.name}</div><div class="lis">${c.address||c.addr||''}</div></div>
+      <span class="bge ${(c.dues||0)>10000?'brd':(c.dues||0)>0?'bam':'bgg'}">${(c.dues||0)>0?money(c.dues)+' dues':'Clear'}</span>
+    </div>`).join('')}`);
+}
+function showOrdSh(cust){
+  if(!cust) return; S.cart={};
+  osh(`<div class="sh-t">Order: ${cust.name} <button class="sh-x" onclick="csh()">✕</button></div>
+    ${(cust.dues||0)>0?`<div class="ab aab" style="margin-bottom:12px"><span>⚠️</span>Dues: <b>${money(cust.dues)}</b>${(cust.dues||0)>10000?' · Needs approval':''}</div>`:''}
+    ${S.products.map(p=>`<div class="li" style="align-items:center">
+      <div class="lim"><div class="lit">${p.name}</div><div class="lis">${money(p.price)} / ${p.unit}</div></div>
+      <div class="qc">
+        <button class="qb" onclick="cQ('${p.id}',${p.price},-1)">−</button>
+        <span class="qv" id="q-${p.id}">0</span>
+        <button class="qb qbp" onclick="cQ('${p.id}',${p.price},1)">+</button>
+      </div>
+    </div>`).join('')}
+    <div class="dv"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:14px;color:var(--mu)">Total</span>
+      <span style="font-size:24px;font-weight:900;color:var(--sl)" id="ctot">${money(0)}</span>
+    </div>
+    <button class="btn bg2 bw" style="padding:15px;font-size:16px" onclick="placeOrd('${cust.id}','${cust.name}',${cust.dues||0})">Place Order →</button>`);
+}
+function cQ(pid,price,delta){
+  S.cart[pid]=Math.max(0,(S.cart[pid]||0)+delta);
+  const el=document.getElementById('q-'+pid); if(el) el.textContent=S.cart[pid];
+  const total=Object.entries(S.cart).reduce((s,[id,q])=>{const p=S.products.find(x=>x.id===id);return s+(p?p.price*q:0);},0);
+  const tel=document.getElementById('ctot'); if(tel) tel.textContent=money(total);
+}
+async function placeOrd(cid,cname,dues){
+  const items=Object.entries(S.cart).filter(([,q])=>q>0).map(([id,q])=>{
+    const p=S.products.find(x=>x.id===id);
+    return{productId:id,name:p.name,sku:p.sku,price:p.price,qty:q,subtotal:p.price*q};
+  });
+  if(!items.length){toast('Add at least one item','e');return;}
+  const total=items.reduce((s,i)=>s+i.subtotal,0);
+  const status=(dues+total>10000)?'PENDING_APPROVAL':'CONFIRMED';
+  try{
+    const ref=await db.collection('orders').add({customerId:cid,customerName:cname,salesmanId:S.uid,salesmanName:S.user.name,items,totalAmount:total,status,createdAt:ts()});
+    S.orders.unshift({id:ref.id,customerId:cid,customerName:cname,salesmanId:S.uid,items,totalAmount:total,status});
+    csh();
+    toast(status==='PENDING_APPROVAL'?'Order placed — needs admin approval':'Order confirmed! ✓',status==='PENDING_APPROVAL'?'w':'s');
+    S.orderFilter='ALL'; go('ords');
+  } catch(e){ toast(e.message,'e'); }
+}
+async function appOrd(id){
+  await db.collection('orders').doc(id).update({status:'CONFIRMED',updatedAt:ts()});
+  const o=S.orders.find(x=>x.id===id); if(o) o.status='CONFIRMED';
+  toast('Order approved!','s'); go('aords');
+}
+async function rejOrd(id){
+  await db.collection('orders').doc(id).update({status:'REJECTED',updatedAt:ts()});
+  const o=S.orders.find(x=>x.id===id); if(o) o.status='REJECTED';
+  toast('Order rejected','e'); go('aords');
+}
+
+// PAYMENT (salesman)
+function pgPay(){
+  const custs=S.customers.filter(c=>c.isActive!==false&&(!c.assignedTo||c.assignedTo===S.uid));
+  S.selMode='Cash';
+  const d=mkDiv('pg');
+  d.innerHTML=`<span class="lbl">Customer *</span>
+    <select class="inp fs" id="pcust">${custs.map(c=>`<option value="${c.id}">${c.name}${(c.dues||0)>0?' — Dues '+money(c.dues):''}</option>`).join('')}</select>
+    <span class="lbl">Amount (₹) *</span>
+    <input class="inp" id="pamt" type="number" placeholder="0.00" style="margin-bottom:0">
+    <span class="lbl">Payment mode *</span>
+    <div class="mr">
+      <button class="mb on" onclick="sM('Cash',this)">💵 Cash</button>
+      <button class="mb" onclick="sM('UPI',this)">📱 UPI</button>
+      <button class="mb" onclick="sM('Bank',this)">🏦 Bank</button>
+      <button class="mb" onclick="sM('Cheque',this)">📄 Cheque</button>
+    </div>
+    <div id="rw" style="display:none"><span class="lbl">Reference / UTR no.</span><input class="inp" id="pref" placeholder="Transaction ID or cheque no." style="margin-bottom:0"></div>
+    <button class="btn bg2 bw" style="padding:15px;font-size:16px;margin-top:14px" onclick="recPay()">Record Payment</button>
+    <div class="sc">Recent Collections</div>
+    ${S.payments.filter(p=>p.salesmanId===S.uid).slice(0,30).map(p=>`<div class="li">
+      <div class="lim">
+        <div class="lit">${p.customerName||''}</div>
+        <div class="lis">${p.mode} · ${p.createdAt?(p.createdAt.toDate?p.createdAt.toDate().toLocaleDateString('en-IN'):p.createdAt):''}${p.reference?' · '+p.reference:''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:800;color:var(--grn)">${money(p.amount)}</div>
+        <span class="bge ${p.reconciled?'bgg':'bam'}">${p.reconciled?'Reconciled':'Pending'}</span>
+      </div>
+    </div>`).join('')}`;
+  return d;
+}
+function sM(m,el){
+  S.selMode=m;
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on')); el.classList.add('on');
+  document.getElementById('rw').style.display=m!=='Cash'?'block':'none';
+}
+async function recPay(){
+  const amt=parseFloat(document.getElementById('pamt').value);
+  const cid=document.getElementById('pcust').value;
+  if(!amt||isNaN(amt)){toast('Enter a valid amount','e');return;}
+  const cust=S.customers.find(c=>c.id===cid);
+  const ref=(document.getElementById('pref')||{}).value||'';
+  try{
+    const docRef=await db.collection('payments').add({customerId:cid,customerName:cust.name,salesmanId:S.uid,salesmanName:S.user.name,amount:amt,mode:S.selMode,reference:ref,reconciled:false,createdAt:ts()});
+    S.payments.unshift({id:docRef.id,customerId:cid,customerName:cust.name,salesmanId:S.uid,amount:amt,mode:S.selMode,reference:ref,reconciled:false});
+    toast(money(amt)+' recorded via '+S.selMode,'s'); go('pay');
+  } catch(e){ toast(e.message,'e'); }
+}
+
+// ══════════════ ADMIN ══════════════
+
+function pgAdash(){
+  const revenue=S.orders.filter(o=>o.status!=='REJECTED').reduce((s,o)=>s+(o.totalAmount||o.total||0),0);
+  const pending=S.orders.filter(o=>o.status==='PENDING_APPROVAL').length;
+  const collected=S.payments.reduce((s,p)=>s+(p.amount||0),0);
+  const d=mkDiv('pg');
+  d.innerHTML=`<div class="pt">Admin Dashboard</div><div class="ps">Live overview</div>
+    <div class="sg">
+      <div class="st" style="border-color:var(--ind)"><div class="sv" style="color:var(--ind)">${S.orders.length}</div><div class="sl2">Total orders</div></div>
+      <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${money(revenue)}</div><div class="sl2">Revenue</div></div>
+      <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${pending}</div><div class="sl2">Need approval</div></div>
+      <div class="st" style="border-color:var(--pur)"><div class="sv" style="color:var(--pur)">${money(collected)}</div><div class="sl2">Collected</div></div>
+    </div>
+    ${pending?`<div class="ab aab" style="cursor:pointer" onclick="go('aords')"><span style="font-size:22px">⚠️</span><div><b>${pending} order(s) need your approval</b><br><span style="font-size:12px">Tap to review →</span></div></div>`:''}
+    <div class="sc">Customers Overview</div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--grn)">${S.customers.filter(c=>c.isActive!==false).length}</div><div class="sl2">Active</div></div>
+      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--red)">${S.customers.filter(c=>c.isActive===false).length}</div><div class="sl2">Inactive</div></div>
+      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--amb)">${S.customers.filter(c=>(c.dues||0)>0).length}</div><div class="sl2">With Dues</div></div>
+    </div>
+    <div class="sc">Recent Visits</div>
+    ${S.visits.slice(0,5).map(v=>`<div class="li">
+      <div class="lim">
+        <div class="lit">${v.customerName||''}</div>
+        <div class="lis">${v.salesmanName||''} · ${v.createdAt?(v.createdAt.toDate?v.createdAt.toDate().toLocaleString('en-IN'):v.createdAt):''}</div>
+      </div>
+      <span class="bge ${v.valid?'bgg':'brd'}">${v.valid?'Valid ✓':'Rejected ✗'}</span>
+    </div>`).join('')}`;
+  return d;
+}
+function pgAords(){ S.orderFilter=S.orderFilter||'ALL'; return pgOrds(); }
+
+function pgAcusts(){
+  const d=mkDiv('pg');
+  d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span style="font-size:15px;font-weight:700;color:var(--sl)">${S.customers.length} customers</span>
+    <button class="btn bp bsm" onclick="addCsh()">+ Add</button>
+  </div>
+  <input class="si" placeholder="Search..." oninput="aSrch(this.value)">
+  <div class="pr">
+    <div class="pl on" onclick="aCF('all',this)">All</div>
+    <div class="pl" onclick="aCF('active',this)">Active</div>
+    <div class="pl" onclick="aCF('inactive',this)">Inactive</div>
+    <div class="pl" onclick="aCF('dues',this)">Has Dues</div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Shop</th><th>Phone</th><th>Status</th><th>Dues</th></tr></thead>
+    <tbody id="act">${rAC(S.customers)}</tbody>
+  </table></div>`;
+  return d;
+}
+function rAC(custs){
+  return custs.map(c=>`<tr>
+    <td><b>${c.name}</b><br><span style="font-size:11px;color:var(--mu)">${c.address||c.addr||''}</span></td>
+    <td>${c.phone||''}</td>
+    <td><span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span></td>
+    <td style="font-weight:700;color:${(c.dues||0)>10000?'var(--red)':(c.dues||0)>0?'var(--amb)':'var(--grn)'}">${money(c.dues||0)}</td>
+  </tr>`).join('');
+}
+function aSrch(q){
+  document.getElementById('act').innerHTML=rAC(S.customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone||'').includes(q)));
+}
+function aCF(f,el){
+  document.querySelectorAll('.pl').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  let c=S.customers;
+  if(f==='active') c=c.filter(x=>x.isActive!==false);
+  else if(f==='inactive') c=c.filter(x=>x.isActive===false);
+  else if(f==='dues') c=c.filter(x=>(x.dues||0)>0);
+  document.getElementById('act').innerHTML=rAC(c);
+}
+
+function pgAbeat(){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d=mkDiv('pg');
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><div class="pt" style="margin:0">Weekly Beat Plan</div><div class="ps" style="margin:0">Auto-clustered by location</div></div>
+    <button class="btn bp bsm" onclick="genBeat()">↻ Generate</button>
+  </div>`;
+  days.forEach(day=>{
+    const ids=S.beat[day]||[];
+    const custs=ids.map(id=>S.customers.find(c=>c.id===id)).filter(Boolean);
+    html+=`<div class="bd"><div class="bdt">${day}<span style="color:var(--mu);font-weight:600;font-size:12px">${custs.length} visits</span></div>
+      ${custs.length?custs.map(c=>`<div class="bc">🏪 ${c.name}<span style="color:#94a3b8;font-size:10px;margin-left:auto">${(c.address||c.addr||'').split(',')[0]}</span></div>`).join('')
+      :`<div style="font-size:12px;color:#94a3b8;padding:4px 6px">Rest day</div>`}
+    </div>`;
+  });
+  d.innerHTML=html; return d;
+}
+async function genBeat(){
+  const custs=S.customers.filter(c=>c.isActive!==false);
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const sorted=[...custs].sort((a,b)=>((a.lat||0)*1000+(a.lng||0))-((b.lat||0)*1000+(b.lng||0)));
+  const plan={}; days.forEach(d=>plan[d]=[]);
+  sorted.forEach((c,i)=>plan[days[i%6]].push(c.id));
+  try{
+    const snap=await db.collection('beatPlans').limit(1).get();
+    if(!snap.empty) await db.collection('beatPlans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
+    else await db.collection('beatPlans').add({plan,createdAt:ts()});
+    S.beat=plan; toast('Beat plan generated!','s'); go('abeat');
+  } catch(e){ toast(e.message,'e'); }
+}
+
+function pgApay(){
+  const total=S.payments.reduce((s,p)=>s+(p.amount||0),0);
+  const unrec=S.payments.filter(p=>!p.reconciled).reduce((s,p)=>s+(p.amount||0),0);
+  const d=mkDiv('pg');
+  d.innerHTML=`<div class="sg" style="margin-bottom:16px">
+    <div class="st" style="border-color:var(--grn)"><div class="sv" style="color:var(--grn)">${money(total)}</div><div class="sl2">Total collected</div></div>
+    <div class="st" style="border-color:var(--amb)"><div class="sv" style="color:var(--amb)">${money(unrec)}</div><div class="sl2">Unreconciled</div></div>
+  </div>
+  ${S.payments.map(p=>`<div class="li">
+    <div class="lim">
+      <div class="lit">${p.customerName||''}</div>
+      <div class="lis">${p.mode} · ${p.salesmanName||''}${p.reference?' · '+p.reference:''}</div>
+      <div class="lis2">${p.createdAt?(p.createdAt.toDate?p.createdAt.toDate().toLocaleDateString('en-IN'):p.createdAt):''}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:18px;font-weight:800;color:var(--grn)">${money(p.amount)}</div>
+      <span class="bge ${p.reconciled?'bgg':'bam'}">${p.reconciled?'Done':'Pending'}</span>
+      ${!p.reconciled?`<br><button class="btn bg2 bsm" style="margin-top:5px" onclick="recn('${p.id}')">Reconcile</button>`:''}
+    </div>
+  </div>`).join('')}`;
+  return d;
+}
+async function recn(id){
+  await db.collection('payments').doc(id).update({reconciled:true});
+  const p=S.payments.find(x=>x.id===id); if(p) p.reconciled=true;
+  toast('Reconciled ✓','s'); go('apay');
+}
+
+// ══════════════ WAREHOUSE ══════════════
+
+const FLOW=['CONFIRMED','PACKED','READY','DELIVERED'];
+function pgWq(){
+  const ords=S.orders.filter(o=>['CONFIRMED','PACKED','READY'].includes(o.status));
+  const d=mkDiv('pg');
+  if(!ords.length){d.innerHTML=`<div class="es"><div class="ei">🎉</div><div class="et">Queue is clear!</div></div>`;return d;}
+  d.innerHTML=ords.map(o=>{
+    const idx=FLOW.indexOf(o.status); const next=FLOW[idx+1];
+    return `<div class="card">
+      <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${o.id.slice(-8).toUpperCase()}</div>
+      <div style="font-size:16px;font-weight:800;color:var(--sl);margin:2px 0">${o.customerName||''}</div>
+      <div style="font-size:13px;color:var(--mu)">${(o.items||[]).length} items · ${money(o.totalAmount||0)}</div>
+      <div class="ws">${FLOW.slice(0,4).map((_,i)=>`<div class="wd ${i<idx?'done':i===idx?'curr':''}"></div>`).join('')}</div>
+      <div style="font-size:12px;color:var(--mu);margin-bottom:10px">${(o.items||[]).map(i=>`<span style="background:var(--bg);padding:3px 8px;border-radius:6px;margin:2px;display:inline-block"><b>${i.name}</b> ×${i.qty}</span>`).join('')}</div>
+      <div class="rbs">
+        ${next&&next!=='DELIVERED'?`<button class="btn bp bsm" onclick="advOrd('${o.id}','${next}')">→ Mark ${next}</button>`:''}
+        ${o.status==='READY'?`<button class="btn bg2 bsm" onclick="delOrd('${o.id}')">📸 Upload POD & Deliver</button>`:''}
+      </div>
+    </div>`;
+  }).join(''); return d;
+}
+function pgWd(){
+  const ords=S.orders.filter(o=>o.status==='DELIVERED');
+  const d=mkDiv('pg');
+  d.innerHTML=ords.length?ords.map(o=>`<div class="li">
+    <div class="lim">
+      <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${o.id.slice(-8).toUpperCase()}</div>
+      <div class="lit">${o.customerName||''}</div>
+      <div class="lis">${(o.items||[]).length} items · ${money(o.totalAmount||0)}</div>
+    </div>
+    <span class="bge bbl">Delivered</span>
+  </div>`).join(''):`<div class="es"><div class="ei">📋</div><div class="et">No deliveries yet</div></div>`;
+  return d;
+}
+async function advOrd(id,next){
+  await db.collection('orders').doc(id).update({status:next,updatedAt:ts()});
+  const o=S.orders.find(x=>x.id===id); if(o) o.status=next;
+  toast('Marked as '+next,'s'); go('wq');
+}
+async function delOrd(id){
+  await db.collection('orders').doc(id).update({status:'DELIVERED',pod:true,updatedAt:ts()});
+  const o=S.orders.find(x=>x.id===id); if(o){o.status='DELIVERED';o.pod=true;}
+  toast('Order delivered!','s'); go('wd');
+}
+</script>
+</body>
+</html>
