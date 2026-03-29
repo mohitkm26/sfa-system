@@ -280,7 +280,8 @@ const S = {
   role:'salesman', user:null, uid:null, userName:'',
   // data caches
   customers:[], orders:[], invoices:[], payments:[],
-  visits:[], items:[], beatPlan:{}, returns:[], allUsers:[],
+  visits:[], items:[], beatPlan:{}, beatPlans:[], returns:[], allUsers:[],
+  clusters:[], skipped:[],
   // ui state
   cart:{}, curCust:null, visitSelfie:false, visitGPS:false,
   navStack:[], orderFilter:'ALL', payFilter:'ALL',
@@ -308,6 +309,7 @@ const NAV = {
     {id:'apay',   icon:'💰', label:'Payments',  title:'Payments'},
     {id:'avisits',icon:'📍', label:'Visits',    title:'Visit Log'},
     {id:'aitems', icon:'📋', label:'Items',     title:'Item Master'},
+    {id:'aclusters', icon:'🧩', label:'Clusters', title:'Cluster Master'},
     {id:'abeat',  icon:'🗓', label:'Beat Plan', title:'Beat Planning'},
     {id:'arets',  icon:'↩️', label:'Returns',   title:'Returns'},
   ],
@@ -362,6 +364,26 @@ function mkDiv(cls,html){
 }
 function uid6(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
 
+// NEW: structured address formatter for customer cards/tables
+function fmtAddress(c){
+  if(!c) return '';
+  const parts=[c.shopNo,c.apartment,c.street,c.cluster,c.subCity,c.city,c.state,c.zip].filter(Boolean);
+  return parts.join(', ');
+}
+
+// NEW: atomic sequence generator from meta/counters
+async function nextSequence(prefix,counterField,pad=4){
+  const ref=db.collection('meta').doc('counters');
+  const seq=await db.runTransaction(async tx=>{
+    const snap=await tx.get(ref);
+    const data=snap.exists?snap.data():{};
+    const next=(data[counterField]||0)+1;
+    tx.set(ref,{[counterField]:next,updatedAt:ts()},{merge:true});
+    return next;
+  });
+  return `${prefix}-${String(seq).padStart(pad,'0')}`;
+}
+
 // Badge helper for statuses
 function badge(s){
   const m={
@@ -369,7 +391,7 @@ function badge(s){
     DELIVERED:'bgbl',PACKED:'bgpu',READY:'bgpu',PENDING:'bgr',
     paid:'bgg',partial:'bgam',unpaid:'bgrd',overdue:'bgrd',
     approved:'bgg',pending:'bgam',collected:'bgg',pending_pickup:'bgam',
-    order_taken:'bgg',no_order:'bgam',
+    order_taken:'bgg',no_order:'bgam',phone_order:'bgcy',
   };
   const label=String(s||'').replace(/_/g,' ');
   return `<span class="bge ${m[s]||'bgr'}">${label}</span>`;
@@ -421,7 +443,8 @@ function doLogout(){
     document.getElementById('login').style.display='flex';
     // clear state
     Object.assign(S,{customers:[],orders:[],invoices:[],payments:[],
-      visits:[],items:[],beatPlan:{},returns:[],allUsers:[],
+      visits:[],items:[],beatPlan:{},beatPlans:[],returns:[],allUsers:[],
+      clusters:[],skipped:[],
       cart:{},curCust:null,visitSelfie:false,visitGPS:false,navStack:[]});
   });
 }
@@ -434,6 +457,7 @@ async function loadAllData(){
     loadCustomers(), loadOrders(), loadInvoices(),
     loadPayments(), loadVisits(), loadItems(),
     loadBeatPlan(), loadReturns(), loadUsers(),
+    loadClusters(), loadSkipped(),
   ]);
 }
 
@@ -511,11 +535,11 @@ async function loadItems(){
 // BEAT PLAN — collection: beat_plans
 async function loadBeatPlan(){
   try{
-    let q=db.collection('beat_plans').limit(1);
+    let q=db.collection('beat_plans').orderBy('date','desc').limit(60);
     if(S.role==='salesman') q=q.where('salesmanId','==',S.uid);
     const snap=await q.get();
-    S.beatPlan=snap.empty?{}:snap.docs[0].data().plan||{};
-    S._beatDocId=snap.empty?null:snap.docs[0].id;
+    S.beatPlans=snap.docs.map(d=>({id:d.id,...d.data()}));
+    S.beatPlan={}; // REPLACED: legacy weekly map retained for backward compatibility
   } catch(e){ console.error('loadBeatPlan',e); }
 }
 
@@ -538,11 +562,44 @@ async function loadUsers(){
   } catch(e){ console.error('loadUsers',e); }
 }
 
+// NEW: CLUSTER MASTER loader
+async function loadClusters(){
+  try{
+    const snap=await db.collection('clusters').orderBy('city').orderBy('subCity').orderBy('name').get();
+    S.clusters=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadClusters',e); }
+}
+
+// NEW: skipped shops loader for next-day prioritization
+async function loadSkipped(){
+  try{
+    let q=db.collection('skipped').orderBy('date','desc').limit(200);
+    if(S.role==='salesman') q=q.where('salesmanId','==',S.uid);
+    const snap=await q.get();
+    S.skipped=snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e){ console.error('loadSkipped',e); }
+}
+
 // Outstanding per customer = sum(invoice.amount - invoice.paidAmount)
 function getOutstanding(customerId){
   return S.invoices
     .filter(inv=>inv.customerId===customerId && inv.status!=='paid')
     .reduce((s,inv)=>s+((inv.amount||0)-(inv.paidAmount||0)),0);
+}
+
+// NEW: beat planner helper (per salesman + date + skipped-first rule)
+function getTodayBeatCustomers(){
+  const date=nowStr();
+  const beatDoc=S.beatPlans.find(b=>b.salesmanId===S.uid&&b.date===date);
+  let ids=beatDoc?.customers||[];
+  const y=new Date(); y.setDate(y.getDate()-1);
+  const yStr=y.toISOString().split('T')[0];
+  const skippedYesterday=S.skipped
+    .filter(s=>s.salesmanId===S.uid&&s.date===yStr)
+    .map(s=>s.customerId);
+  // skipped shops are prioritized first in next day beat
+  ids=[...new Set([...skippedYesterday,...ids])];
+  return ids.map(id=>S.customers.find(c=>c.id===id)).filter(c=>c&&c.isActive!==false);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -572,7 +629,7 @@ function render(pid){
     inv:pgInv, pay:pgPay,
     // admin
     adash:pgAdash, aords:pgAords, ainv:pgAinv, acusts:pgAcusts,
-    apay:pgApay, avisits:pgAvisits, aitems:pgAitems,
+    apay:pgApay, avisits:pgAvisits, aitems:pgAitems, aclusters:pgAclusters,
     abeat:pgAbeat, arets:pgArets,
     // warehouse
     wq:pgWq, winv:pgWinv, wd:pgWd, wret:pgWret,
@@ -588,10 +645,7 @@ function render(pid){
 /* ── DASHBOARD ─────────────────────────────────────── */
 function pgDash(){
   const day=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
-  const ids=(S.beatPlan[day]||[]);
-  const todayC=ids.length
-    ? ids.map(id=>S.customers.find(c=>c.id===id)).filter(Boolean)
-    : S.customers.filter(c=>c.isActive!==false);
+  const todayC=getTodayBeatCustomers();
   const todayVisits=S.visits.filter(v=>v.salesmanId===S.uid&&isToday(v.createdAt));
   const todayOrds=S.orders.filter(o=>o.salesmanId===S.uid&&isToday(o.createdAt));
   const todayColl=S.payments.filter(p=>p.collectedBy===S.uid&&isToday(p.createdAt))
@@ -630,7 +684,7 @@ function pgDash(){
       const visited=S.visits.some(v=>v.customerId===c.id&&isToday(v.createdAt)&&v.valid);
       return `<div class="li">
         <div class="lim">
-          <div class="lit">${c.name}</div>
+          <div class="lit">${c.name} ${c.customerNumber?`<span style="font-size:10px;color:#94a3b8">(${c.customerNumber})</span>`:''}</div>
           <div class="lis">📞 ${c.phone||''} · ${c.category||''}</div>
           <div class="tag-row">
             ${visited?`<span class="bge bgg">✓ Visited</span>`:`<span class="bge bgr">Not visited</span>`}
@@ -671,9 +725,9 @@ function rlcSalesman(custs){
     return `<div class="li" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div class="lim">
-          <div class="lit">${c.name}</div>
+          <div class="lit">${c.name} ${c.customerNumber?`<span style="font-size:10px;color:#94a3b8">(${c.customerNumber})</span>`:''}</div>
           <div class="lis">📞 ${c.phone||''} · ${c.category||''}</div>
-          <div class="lis2">📍 ${c.address||''}</div>
+          <div class="lis2">📍 ${fmtAddress(c)}</div>
           <div class="tag-row">
             <span class="bge ${c.isActive!==false?'bgg':'bgr'}">${c.isActive!==false?'Active':'Inactive'}</span>
             ${owe>0?`<span class="bge ${owe>10000?'bgrd':'bgam'}">Dues ${money(owe)}</span>`:`<span class="bge bgg">Clear</span>`}
@@ -714,7 +768,7 @@ function viewCustInvoices(cid){
       <div class="li" style="flex-direction:column;align-items:stretch">
         <div style="display:flex;justify-content:space-between">
           <div>
-            <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${inv.invoiceId||inv.id.slice(-8).toUpperCase()}</div>
+            <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${inv.invoiceNumber||inv.invoiceId||inv.id.slice(-8).toUpperCase()}</div>
             <div class="lit">Order #${(inv.orderId||'').slice(-6).toUpperCase()}</div>
             <div class="lis">Due: ${fmtDate(inv.dueDate)} · Paid: ${money(inv.paidAmount)}</div>
           </div>
@@ -734,19 +788,20 @@ function viewCustInvoices(cid){
 /* ── VISIT (salesman) ──────────────────────────────── */
 function pgVisit(){
   const c=S.curCust;
-  const ok=S.visitSelfie&&S.visitGPS;
+  const vType=window._visitType||'order_taken';
+  const ok=vType==='phone_order' ? true : (S.visitSelfie&&S.visitGPS);
   const d=mkDiv('pg');
   d.innerHTML=`
     ${c?`<div class="card">
       <div style="font-size:14px;font-weight:700;color:var(--sl)">${c.name}</div>
-      <div style="font-size:12px;color:var(--mu);margin-top:2px">📍 ${c.address||''}</div>
+      <div style="font-size:12px;color:var(--mu);margin-top:2px">📍 ${fmtAddress(c)}</div>
       ${getOutstanding(c.id)>0?`<div style="margin-top:6px">
         <span class="bge ${getOutstanding(c.id)>10000?'bgrd':'bgam'}">Dues ${money(getOutstanding(c.id))}</span>
       </div>`:''}
     </div>`
     :`<div class="ab aab">No customer selected — go to Home or Shops and tap Visit</div>`}
 
-    <div class="card" style="text-align:center;padding:20px">
+    <div class="card" style="text-align:center;padding:20px;${vType==='phone_order'?'opacity:.55;pointer-events:none;':''}">
       <div class="sc2 ${S.visitSelfie?'done':''}" id="sc-btn" onclick="takeSelfie()">
         ${S.visitSelfie?'🤳':'📷'}
       </div>
@@ -757,7 +812,7 @@ function pgVisit(){
       </button>
     </div>
 
-    <div class="card">
+    <div class="card" style="${vType==='phone_order'?'opacity:.55;pointer-events:none;':''}">
       <div style="font-weight:700;font-size:14px;color:var(--sl);margin-bottom:4px">Step 2 — Capture GPS</div>
       <div style="font-size:12px;color:var(--mu);margin-bottom:9px">Must be within 200m of shop</div>
       <div class="gr">
@@ -774,8 +829,9 @@ function pgVisit(){
 
     <span class="lbl">Visit Outcome</span>
     <div class="mr" style="margin-bottom:10px">
-      <button class="mb on" id="vt-order" onclick="setVType('order_taken',this)">📦 Order Taken</button>
-      <button class="mb" id="vt-noorder" onclick="setVType('no_order',this)">🚫 No Order</button>
+      <button class="mb ${vType==='order_taken'?'on':''}" id="vt-order" onclick="setVType('order_taken',this)">📦 Order Taken</button>
+      <button class="mb ${vType==='no_order'?'on':''}" id="vt-noorder" onclick="setVType('no_order',this)">🚫 No Order</button>
+      <button class="mb ${vType==='phone_order'?'on':''}" id="vt-phone" onclick="setVType('phone_order',this)">📞 Phone Order</button>
     </div>
 
     <span class="lbl">Remarks (required if no order)</span>
@@ -785,13 +841,14 @@ function pgVisit(){
       ${ok?'onclick="subVisit()"':''} ${ok?'':'disabled'}>
       ${ok?'✓ Submit Visit →':'Complete Steps 1 & 2 above to continue'}
     </button>`;
-  window._visitType='order_taken';
+  window._visitType=window._visitType||'order_taken';
   return d;
 }
 function setVType(t,el){
   window._visitType=t;
-  document.querySelectorAll('#vt-order,#vt-noorder').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('#vt-order,#vt-noorder,#vt-phone').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
+  render('visit');
 }
 function takeSelfie(){
   // Simulate camera: in production, use <input type=file accept=image/*>
@@ -838,6 +895,7 @@ async function subVisit(){
   if(!S.curCust){ toast('No customer selected','e'); return; }
   const remarks=document.getElementById('v-remarks')?document.getElementById('v-remarks').value.trim():'';
   const vtype=window._visitType||'order_taken';
+  if(vtype!=='phone_order' && (!S.visitSelfie||!S.visitGPS)){ toast('Capture selfie and GPS first','e'); return; }
   if(vtype==='no_order'&&!remarks){ toast('Remarks required when no order','e'); return; }
   try{
     const data={
@@ -851,9 +909,15 @@ async function subVisit(){
     };
     const ref=await db.collection('visits').add(data);
     S.visits.unshift({id:ref.id,...data});
+    // NEW: persist skipped shops for next day beat priority
+    if(vtype==='no_order'){
+      const skipped={customerId:S.curCust.id,salesmanId:S.uid,date:nowStr(),createdAt:ts()};
+      const sRef=await db.collection('skipped').add(skipped);
+      S.skipped.unshift({id:sRef.id,...skipped});
+    }
     toast('Visit logged!','s');
     S.cart={};
-    if(vtype==='order_taken'){
+    if(vtype==='order_taken' || vtype==='phone_order'){
       setTimeout(()=>{ showOrdSh(S.curCust); go('ords'); },600);
     } else {
       go('dash');
@@ -914,7 +978,7 @@ function pickCustForOrder(){
     ${custs.map(c=>{
       const owe=getOutstanding(c.id);
       return `<div class="li" onclick="csh();newOrder('${c.id}')" style="cursor:pointer">
-        <div class="lim"><div class="lit">${c.name}</div><div class="lis">${c.address||''}</div></div>
+        <div class="lim"><div class="lit">${c.name}</div><div class="lis">${fmtAddress(c)}</div></div>
         <span class="bge ${owe>10000?'bgrd':owe>0?'bgam':'bgg'}">${owe>0?money(owe)+' dues':'Clear'}</span>
       </div>`;
     }).join('')}`);
@@ -1045,16 +1109,17 @@ function renderInvPage(invs,pid){
       <table>
         <thead><tr>
           <th>Invoice</th><th>Customer</th><th>Amount</th>
-          <th>Outstanding</th><th>Due</th><th>Status</th><th></th>
+          <th>Outstanding</th><th>Invoice Date</th><th>Due Date</th><th>Status</th><th></th>
         </tr></thead>
         <tbody>
           ${invs.map(inv=>{
             const owe=(inv.amount||0)-(inv.paidAmount||0);
             return `<tr>
-              <td><b>${inv.invoiceId||inv.id.slice(-6).toUpperCase()}</b></td>
+              <td><b>${inv.invoiceNumber||inv.invoiceId||inv.id.slice(-6).toUpperCase()}</b></td>
               <td>${inv.customerName||''}</td>
               <td>${money(inv.amount)}</td>
               <td class="${oweClass(owe)}">${money(owe)}</td>
+              <td>${fmtDate(inv.invoiceDate||inv.createdAt)}</td>
               <td>${fmtDate(inv.dueDate)}</td>
               <td>${badge(inv.status)}</td>
               <td>
@@ -1077,7 +1142,7 @@ function pgPay(){
     <span class="lbl">Invoice *</span>
     <select class="inp fs" id="pay-inv">
       <option value="">Select invoice...</option>
-      ${unpaidInvs.map(i=>`<option value="${i.id}">#${i.invoiceId||i.id.slice(-6).toUpperCase()} — ${i.customerName||''} — Due ${money((i.amount||0)-(i.paidAmount||0))}</option>`).join('')}
+      ${unpaidInvs.map(i=>`<option value="${i.id}">#${i.invoiceNumber||i.invoiceId||i.id.slice(-6).toUpperCase()} — ${i.customerName||''} — Due ${money((i.amount||0)-(i.paidAmount||0))}</option>`).join('')}
     </select>
     <span class="lbl">Amount (₹) *</span>
     <input class="inp" id="pamt" type="number" placeholder="0.00" style="margin-bottom:0">
@@ -1125,7 +1190,7 @@ async function recPay(){
   if(amt>maxPay){ toast('Amount exceeds outstanding: '+money(maxPay),'e'); return; }
   try{
     const payRef=await db.collection('payments').add({
-      invoiceId:invId, invoiceRef:inv.invoiceId||invId.slice(-6).toUpperCase(),
+      invoiceId:invId, invoiceRef:inv.invoiceNumber||inv.invoiceId||invId.slice(-6).toUpperCase(),
       customerId:inv.customerId, customerName:inv.customerName,
       orderId:inv.orderId, amount:amt,
       mode:S.selMode, reference:ref,
@@ -1143,7 +1208,7 @@ function payAgainstInvoice(invId,custId){
   if(!inv) return;
   const owe=(inv.amount||0)-(inv.paidAmount||0);
   S.selMode='Cash';
-  osh(`<div class="sh-t">Pay Invoice #${inv.invoiceId||invId.slice(-6).toUpperCase()} <button class="sh-x" onclick="csh()">✕</button></div>
+  osh(`<div class="sh-t">Pay Invoice #${inv.invoiceNumber||inv.invoiceId||invId.slice(-6).toUpperCase()} <button class="sh-x" onclick="csh()">✕</button></div>
     <div class="ab aab"><span>💰</span><div>Outstanding: <b>${money(owe)}</b></div></div>
     <span class="lbl">Amount (₹) *</span>
     <input class="inp" id="qi-amt" type="number" placeholder="${owe}" value="${owe}" style="margin-bottom:0">
@@ -1171,7 +1236,7 @@ async function submitQuickPay(invId){
   if(!inv) return;
   try{
     await db.collection('payments').add({
-      invoiceId:invId, invoiceRef:inv.invoiceId||invId.slice(-6).toUpperCase(),
+      invoiceId:invId, invoiceRef:inv.invoiceNumber||inv.invoiceId||invId.slice(-6).toUpperCase(),
       customerId:inv.customerId, customerName:inv.customerName,
       orderId:inv.orderId, amount:amt,
       mode:S.selMode, reference:ref,
@@ -1333,7 +1398,7 @@ function rAC(custs,salesmen){
     const owe=getOutstanding(c.id);
     const smName=c.assignedSalesmanName||(sm.find(s=>s.id===c.assignedSalesmanId)||{}).name||'—';
     return `<tr>
-      <td><b>${c.name}</b><br><span style="font-size:11px;color:var(--mu)">${c.address||''}</span></td>
+      <td><b>${c.name}</b><br><span style="font-size:11px;color:var(--mu)">${fmtAddress(c)}</span></td>
       <td>${c.phone||''}</td>
       <td>${smName}</td>
       <td class="${oweClass(owe)}">${money(owe)}</td>
@@ -1359,19 +1424,33 @@ function aCF(f,el){
 }
 function addCshAdmin(){
   const salesmen=S.allUsers.filter(u=>u.role==='salesman');
+  const states=['Maharashtra','Karnataka','Delhi','Gujarat','Tamil Nadu','Telangana'];
+  const clusterOptions=S.clusters.map(c=>`<option value="${c.id}">${c.name} · ${c.subCity}, ${c.city}</option>`).join('');
   osh(`<div class="sh-t">Add Customer <button class="sh-x" onclick="csh()">✕</button></div>
     <span class="lbl">Shop Name *</span>
     <input class="inp" id="nc-n" placeholder="e.g. Sharma Kirana" style="margin-bottom:0">
     <span class="lbl">Phone *</span>
     <input class="inp" id="nc-p" type="tel" placeholder="10-digit" style="margin-bottom:0">
-    <span class="lbl">Address *</span>
-    <input class="inp" id="nc-a" placeholder="Full shop address" style="margin-bottom:0">
-    <span class="lbl">Category</span>
-    <select class="inp fs" id="nc-cat"><option>FMCG</option><option>Beverages</option><option>Snacks</option><option>Dairy</option></select>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">Shop No / Plot No</span><input class="inp" id="nc-shopno" placeholder="A-12" style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">Apartment</span><input class="inp" id="nc-apt" placeholder="Sunrise Apt" style="margin-bottom:0"></div>
+    </div>
+    <span class="lbl">Street *</span>
+    <input class="inp" id="nc-street" placeholder="Main Market Road" style="margin-bottom:0">
+    <span class="lbl">Cluster *</span>
+    <select class="inp fs" id="nc-cluster" onchange="onClusterChange(this.value)">
+      <option value="">Select cluster...</option>${clusterOptions}
+    </select>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">Sub City *</span><input class="inp" id="nc-subcity" readonly style="margin-bottom:0"></div>
+      <div class="fcol"><span class="lbl">City *</span><input class="inp" id="nc-city" readonly style="margin-bottom:0"></div>
+    </div>
+    <div class="frow">
+      <div class="fcol"><span class="lbl">State *</span><select class="inp fs" id="nc-state"><option value="">Select state...</option>${states.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="fcol"><span class="lbl">ZIP *</span><input class="inp" id="nc-zip" placeholder="400001" style="margin-bottom:0"></div>
+    </div>
     <span class="lbl">GSTN (optional)</span>
     <input class="inp" id="nc-g" placeholder="27AAPFU..." style="margin-bottom:0">
-    <span class="lbl">Beat Day</span>
-    <select class="inp fs" id="nc-day"><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option></select>
     <span class="lbl">Assign to Salesman</span>
     <select class="inp fs" id="nc-sm">
       <option value="">Unassigned</option>
@@ -1382,23 +1461,39 @@ function addCshAdmin(){
 async function saveAdminCust(){
   const n=document.getElementById('nc-n').value.trim();
   const p=document.getElementById('nc-p').value.trim();
-  const a=document.getElementById('nc-a').value.trim();
-  const cat=document.getElementById('nc-cat').value;
+  const shopNo=document.getElementById('nc-shopno').value.trim();
+  const apartment=document.getElementById('nc-apt').value.trim();
+  const street=document.getElementById('nc-street').value.trim();
+  const clusterId=document.getElementById('nc-cluster').value;
+  const subCity=document.getElementById('nc-subcity').value.trim();
+  const city=document.getElementById('nc-city').value.trim();
+  const state=document.getElementById('nc-state').value.trim();
+  const zip=document.getElementById('nc-zip').value.trim();
   const g=document.getElementById('nc-g').value.trim();
-  const day=document.getElementById('nc-day').value;
   const smId=document.getElementById('nc-sm').value;
   const smName=smId?(S.allUsers.find(u=>u.id===smId)||{}).name||'':'';
-  if(!n||!p||!a){ toast('Fill required fields','e'); return; }
+  const cluster=(S.clusters.find(c=>c.id===clusterId)||{}).name||'';
+  if(!n||!p||!street||!cluster||!subCity||!city||!state||!zip){ toast('Fill all mandatory fields','e'); return; }
   try{
+    const customerNumber=await nextSequence('CUST','customer');
     const ref=await db.collection('customers').add({
-      name:n,phone:p,address:a,category:cat,gstn:g,beatDay:day,
+      customerNumber,
+      name:n,phone:p,shopNo,apartment,street,cluster,clusterId,subCity,city,state,zip,gstin:g,
       assignedSalesmanId:smId,assignedSalesmanName:smName,
-      isActive:true,dues:0,createdAt:ts(),createdBy:S.uid,
+      isActive:true,createdAt:ts(),createdBy:S.uid,
     });
-    S.customers.push({id:ref.id,name:n,phone:p,address:a,category:cat,gstn:g,
-      beatDay:day,assignedSalesmanId:smId,assignedSalesmanName:smName,isActive:true,dues:0});
+    S.customers.push({id:ref.id,customerNumber,name:n,phone:p,shopNo,apartment,street,cluster,clusterId,subCity,city,state,zip,gstin:g,
+      assignedSalesmanId:smId,assignedSalesmanName:smName,isActive:true});
     csh(); toast('Customer added!','s'); go('acusts');
   } catch(e){ toast(e.message,'e'); }
+}
+// NEW: auto-fill sub-city and city from cluster selection
+function onClusterChange(clusterId){
+  const c=S.clusters.find(x=>x.id===clusterId);
+  const sc=document.getElementById('nc-subcity');
+  const city=document.getElementById('nc-city');
+  if(sc) sc.value=c?.subCity||'';
+  if(city) city.value=c?.city||'';
 }
 function assignCust(cid){
   const salesmen=S.allUsers.filter(u=>u.role==='salesman');
@@ -1410,19 +1505,14 @@ function assignCust(cid){
       <option value="">Unassigned</option>
       ${salesmen.map(s=>`<option value="${s.id}" ${cust.assignedSalesmanId===s.id?'selected':''}>${s.name}</option>`).join('')}
     </select>
-    <span class="lbl">Beat Day</span>
-    <select class="inp fs" id="asgn-day">
-      ${['Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<option ${cust.beatDay===d?'selected':''}>${d}</option>`).join('')}
-    </select>
     <button class="btn bp bw" style="margin-top:12px" onclick="saveAssign('${cid}')">Save Assignment</button>`);
 }
 async function saveAssign(cid){
   const smId=document.getElementById('asgn-sm').value;
-  const day=document.getElementById('asgn-day').value;
   const smName=smId?(S.allUsers.find(u=>u.id===smId)||{}).name||'':'';
-  await db.collection('customers').doc(cid).update({assignedSalesmanId:smId,assignedSalesmanName:smName,beatDay:day,updatedAt:ts()});
+  await db.collection('customers').doc(cid).update({assignedSalesmanId:smId,assignedSalesmanName:smName,updatedAt:ts()});
   const c=S.customers.find(x=>x.id===cid);
-  if(c){c.assignedSalesmanId=smId;c.assignedSalesmanName=smName;c.beatDay=day;}
+  if(c){c.assignedSalesmanId=smId;c.assignedSalesmanName=smName;}
   csh(); toast('Customer assigned!','s'); render('acusts');
 }
 async function toggleActive(cid,isActive){
@@ -1613,90 +1703,89 @@ async function delItem(id){
 /* ── ADMIN: BEAT PLAN ──────────────────────────────── */
 function pgAbeat(){
   const salesmen=S.allUsers.filter(u=>u.role==='salesman');
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
-  const selSm=S.adminSalesmanFilter||( salesmen[0]?salesmen[0].id:'');
-  const smCusts=S.customers.filter(c=>c.assignedSalesmanId===selSm);
+  const selSm=S.adminSalesmanFilter||(salesmen[0]?salesmen[0].id:'');
+  const startDate=new Date();
+  const next7=[...Array(7)].map((_,i)=>{ const d=new Date(startDate); d.setDate(d.getDate()+i); return d.toISOString().split('T')[0]; });
+  const smCusts=S.customers.filter(c=>c.assignedSalesmanId===selSm&&c.isActive!==false);
   const d=mkDiv('pg');
   d.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div>
         <div class="pt" style="margin:0">Beat Planning</div>
-        <div class="ps" style="margin:0">Manage weekly routes</div>
+        <div class="ps" style="margin:0">Per salesman per date (cluster-based)</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select class="inp inp-sm" style="width:auto;margin:0" onchange="S.adminSalesmanFilter=this.value;render('abeat')">
           <option value="">Select Salesman</option>
           ${salesmen.map(u=>`<option value="${u.id}" ${selSm===u.id?'selected':''}>${u.name}</option>`).join('')}
         </select>
-        <button class="btn bp bsm" onclick="genBeat('${selSm}')">↻ Auto-Generate</button>
+        <button class="btn bp bsm" onclick="genBeat('${selSm}')">↻ Auto-Generate 7D</button>
       </div>
     </div>
-    ${selSm?days.map(day=>{
-      const dayIds=(S.beatPlan[day]||[]);
-      const dayCusts=dayIds.map(id=>smCusts.find(c=>c.id===id)).filter(Boolean);
-      const unassigned=smCusts.filter(c=>c.beatDay===day&&!dayIds.includes(c.id));
+    ${selSm?next7.map(date=>{
+      const beat=S.beatPlans.find(b=>b.salesmanId===selSm&&b.date===date)||{clusters:[],customers:[]};
+      const beatCusts=beat.customers.map(cid=>smCusts.find(c=>c.id===cid)).filter(Boolean);
       return `<div class="bd2">
-        <div class="bdt">${day}
-          <div style="display:flex;gap:5px">
-            <span style="font-weight:600;color:var(--mu);font-size:11px">${dayCusts.length} shops</span>
-            <button class="btn bgy bsm" style="padding:3px 8px;font-size:10px" onclick="addToBeat('${selSm}','${day}')">+ Add</button>
-          </div>
-        </div>
-        ${dayCusts.map(c=>`<div class="bc">
-          <span>🏪</span><span style="flex:1">${c.name}</span>
-          <button onclick="removeFromBeat('${selSm}','${day}','${c.id}')" style="background:none;border:none;color:var(--red);font-size:12px;cursor:pointer">✕</button>
-        </div>`).join('')}
-        ${unassigned.length?`<div style="font-size:11px;color:var(--mu);padding:4px 6px">${unassigned.length} more with beatDay=${day} not yet in plan</div>`:''}
-        ${!dayCusts.length?`<div style="font-size:11px;color:#94a3b8;padding:4px 6px">No shops assigned to ${day}</div>`:''}
+        <div class="bdt">${date}<span style="font-size:11px;color:var(--mu)">${beat.clusters.length} clusters · ${beatCusts.length} shops</span></div>
+        <div class="lis2" style="margin-bottom:6px">Clusters: ${beat.clusters.length?beat.clusters.join(', '):'—'}</div>
+        ${beatCusts.map(c=>`<div class="bc"><span>🏪</span><span style="flex:1">${c.name}</span><span style="font-size:11px;color:var(--mu)">${c.cluster||''}</span></div>`).join('')||'<div style="font-size:11px;color:#94a3b8;padding:4px 6px">No shops planned</div>'}
       </div>`;
-    }).join('')
-    : `<div class="es"><div class="ei">👆</div><div class="et">Select a salesman to manage their beat plan</div></div>`}`;
+    }).join(''):`<div class="es"><div class="ei">👆</div><div class="et">Select a salesman to manage beat plans</div></div>`}`;
   return d;
 }
+// REPLACED: weekly beat logic with date-wise cluster beat planning
 async function genBeat(smId){
   if(!smId){ toast('Select a salesman first','e'); return; }
   const custs=S.customers.filter(c=>c.assignedSalesmanId===smId&&c.isActive!==false);
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat'];
-  const sorted=[...custs].sort((a,b)=>((a.lat||0)*1000+(a.lng||0))-((b.lat||0)*1000+(b.lng||0)));
-  const plan={}; days.forEach(d=>plan[d]=[]);
-  sorted.forEach((c,i)=>plan[days[i%6]].push(c.id));
-  try{
-    const snap=await db.collection('beat_plans').where('salesmanId','==',smId).limit(1).get();
-    if(!snap.empty){
-      await db.collection('beat_plans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
-    } else {
-      await db.collection('beat_plans').add({salesmanId:smId,plan,createdAt:ts()});
-    }
-    S.beatPlan=plan; toast('Beat plan generated!','s'); render('abeat');
-  } catch(e){ toast(e.message,'e'); }
-}
-function addToBeat(smId,day){
-  const current=S.beatPlan[day]||[];
-  const available=S.customers.filter(c=>c.assignedSalesmanId===smId&&!current.includes(c.id));
-  if(!available.length){ toast('All assigned customers already in this day','w'); return; }
-  osh(`<div class="sh-t">Add to ${day} Beat <button class="sh-x" onclick="csh()">✕</button></div>
-    ${available.map(c=>`<div class="li" onclick="csh();addCustToBeat('${smId}','${day}','${c.id}')" style="cursor:pointer">
-      <div class="lim"><div class="lit">${c.name}</div><div class="lis">${c.address||''}</div></div>
-    </div>`).join('')}`);
-}
-async function addCustToBeat(smId,day,cid){
-  const plan={...S.beatPlan};
-  if(!plan[day]) plan[day]=[];
-  if(!plan[day].includes(cid)) plan[day].push(cid);
-  const snap=await db.collection('beat_plans').where('salesmanId','==',smId).limit(1).get();
-  if(!snap.empty){
-    await db.collection('beat_plans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
-  } else {
-    await db.collection('beat_plans').add({salesmanId:smId,plan,createdAt:ts()});
+  const clusterMap={};
+  custs.forEach(c=>{ if(!clusterMap[c.cluster]) clusterMap[c.cluster]=[]; clusterMap[c.cluster].push(c.id); });
+  const clusters=Object.keys(clusterMap).filter(Boolean);
+  if(!clusters.length){ toast('No cluster-mapped customers for selected salesman','w'); return; }
+  const today=new Date();
+  const batch=db.batch();
+  for(let i=0;i<7;i++){
+    const dt=new Date(today); dt.setDate(dt.getDate()+i);
+    const date=dt.toISOString().split('T')[0];
+    const chosenCluster=clusters[i%clusters.length]; // each cluster once per week
+    const customers=clusterMap[chosenCluster]||[];
+    const ref=db.collection('beat_plans').doc(`${smId}_${date}`);
+    batch.set(ref,{date,salesmanId:smId,clusters:[chosenCluster],customers,updatedAt:ts()},{merge:true});
   }
-  S.beatPlan=plan; toast('Added to beat plan','s'); render('abeat');
+  await batch.commit();
+  await loadBeatPlan();
+  toast('7-day beat plan generated','s');
+  render('abeat');
 }
-async function removeFromBeat(smId,day,cid){
-  const plan={...S.beatPlan};
-  if(plan[day]) plan[day]=plan[day].filter(id=>id!==cid);
-  const snap=await db.collection('beat_plans').where('salesmanId','==',smId).limit(1).get();
-  if(!snap.empty) await db.collection('beat_plans').doc(snap.docs[0].id).update({plan,updatedAt:ts()});
-  S.beatPlan=plan; render('abeat');
+
+// NEW: admin cluster master page
+function pgAclusters(){
+  const d=mkDiv('pg');
+  d.innerHTML=`
+    <div class="card">
+      <div class="frow">
+        <div class="fcol"><span class="lbl">Cluster Name *</span><input id="cl-name" class="inp" placeholder="Cluster A" style="margin-bottom:0"></div>
+        <div class="fcol"><span class="lbl">Sub City *</span><input id="cl-subcity" class="inp" placeholder="Andheri East" style="margin-bottom:0"></div>
+      </div>
+      <div class="frow">
+        <div class="fcol"><span class="lbl">City *</span><input id="cl-city" class="inp" placeholder="Mumbai" style="margin-bottom:0"></div>
+        <div class="fcol" style="justify-content:flex-end"><button class="btn bp" style="margin-top:26px" onclick="saveCluster()">+ Add Cluster</button></div>
+      </div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Cluster</th><th>Sub City</th><th>City</th></tr></thead>
+      <tbody>${S.clusters.map(c=>`<tr><td>${c.name}</td><td>${c.subCity}</td><td>${c.city}</td></tr>`).join('')}</tbody>
+    </table></div>`;
+  return d;
+}
+async function saveCluster(){
+  const name=document.getElementById('cl-name').value.trim();
+  const subCity=document.getElementById('cl-subcity').value.trim();
+  const city=document.getElementById('cl-city').value.trim();
+  if(!name||!subCity||!city){ toast('All cluster fields are required','e'); return; }
+  const ref=await db.collection('clusters').add({name,subCity,city,createdAt:ts(),createdBy:S.uid});
+  S.clusters.push({id:ref.id,name,subCity,city});
+  toast('Cluster added','s');
+  render('aclusters');
 }
 
 /* ── ADMIN: RETURNS ────────────────────────────────── */
@@ -1782,6 +1871,8 @@ function pgWq(){
 async function advOrd(id,next){
   await db.collection('orders').doc(id).update({status:next,updatedAt:ts()});
   const o=S.orders.find(x=>x.id===id); if(o) o.status=next;
+  // NEW: invoice must be created when warehouse marks PACKED
+  if(next==='PACKED') await createInvoice(id);
   toast('Marked as '+next,'s'); render('wq');
 }
 async function deliverOrd(id){
@@ -1798,22 +1889,23 @@ async function createInvoice(ordId){
   const o=S.orders.find(x=>x.id===ordId);
   if(!o){ toast('Order not found','e'); return; }
   const exists=S.invoices.some(i=>i.orderId===ordId);
-  if(exists){ toast('Invoice already exists for this order','w'); return; }
-  const invId='INV-'+uid6();
+  if(exists){ return; }
+  const invoiceNumber=await nextSequence('INV','invoice');
+  const invoiceDate=firebase.firestore.Timestamp.fromDate(new Date());
   const dueDate=new Date(); dueDate.setDate(dueDate.getDate()+14);
   try{
     const ref=await db.collection('invoices').add({
-      invoiceId:invId, orderId:ordId,
+      invoiceNumber, invoiceDate, orderId:ordId,
       customerId:o.customerId, customerName:o.customerName,
       salesmanId:o.salesmanId, salesmanName:o.salesmanName,
       amount:o.totalAmount||0, paidAmount:0,
       dueDate:firebase.firestore.Timestamp.fromDate(dueDate),
       status:'unpaid', createdAt:ts(),
     });
-    S.invoices.unshift({id:ref.id,invoiceId:invId,orderId:ordId,
+    S.invoices.unshift({id:ref.id,invoiceNumber,invoiceDate,orderId:ordId,
       customerId:o.customerId,customerName:o.customerName,
       amount:o.totalAmount||0,paidAmount:0,status:'unpaid'});
-    toast('Invoice created: '+invId,'s');
+    toast('Invoice created: '+invoiceNumber,'s');
     render('wq');
   } catch(e){ toast(e.message,'e'); }
 }
@@ -1836,7 +1928,7 @@ function rWInv(invs){
     const owe=(inv.amount||0)-(inv.paidAmount||0);
     return `<div class="li">
       <div class="lim">
-        <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${inv.invoiceId||inv.id.slice(-6)}</div>
+        <div style="font-size:10px;color:#94a3b8;font-family:monospace">#${inv.invoiceNumber||inv.invoiceId||inv.id.slice(-6)}</div>
         <div class="lit">${inv.customerName||''}</div>
         <div class="lis">Order #${(inv.orderId||'').slice(-6).toUpperCase()} · Due ${fmtDate(inv.dueDate)}</div>
         <div class="lis2">Paid: ${money(inv.paidAmount||0)}</div>
